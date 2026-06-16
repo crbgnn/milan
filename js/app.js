@@ -288,13 +288,25 @@ async function savePledge() {
     state.selectedAmount = null;
     if (selectors.pledgeButton) selectors.pledgeButton.disabled = true;
 
-    // Confirmation message
-    alert('✅ Dichiarazione registrata');
+    // Toast inline
+    const toast = document.createElement('div');
+    toast.textContent = '✅ Dichiarazione registrata';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:20px;background:#C41C23;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+
+    // Share su Twitter
+    openShare(amount, state.stats);
+
     btn.textContent = originalText;
     btn.disabled = false;
   } catch (err) {
     console.error('Unexpected error:', err);
-    alert('Errore inatteso. Riprova.');
+    const toastErr = document.createElement('div');
+    toastErr.textContent = '❌ Errore inatteso. Riprova.';
+    toastErr.style.cssText = 'position:fixed;bottom:24px;right:20px;background:#333;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);';
+    document.body.appendChild(toastErr);
+    setTimeout(() => toastErr.remove(), 3000);
     btn.textContent = originalText;
     btn.disabled = false;
   }
@@ -900,6 +912,17 @@ function setupRealtime() {
     .subscribe();
 }
 
+function openShare(amount, stats) {
+  const text =
+`🔴 Sono uno dei ${stats.users} tifosi verificati del Milan
+💰 Ho dichiarato: €${amount.toLocaleString('it-IT')}
+📊 Fan Index globale in crescita
+
+👉 https://milanaitifosi.it`;
+
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithEmail = loginWithEmail;
 window.savePledge = savePledge;
