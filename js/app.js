@@ -15,6 +15,10 @@ const selectors = {
 const STATE_KEY = 'milan_auth';
 const OTP_KEY = 'milan_otp';
 
+const SUPABASE_URL = 'https://tgaqsjnjwqqnozscdpds.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-9wJdCJPLLfL9dqAARXNqA_iPqD2ib8';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const fanData = [
   { country: 'Italia', users: 25000, avg: 650 },
   { country: 'Brasile', users: 18000, avg: 780 },
@@ -61,7 +65,7 @@ function saveAuthState() {
 }
 
 async function loginWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
   });
 
@@ -70,7 +74,7 @@ async function loginWithGoogle() {
 }
 
 async function loginWithEmail(email) {
-  const { data, error } = await supabase.auth.signInWithOtp({
+  const { data, error } = await supabaseClient.auth.signInWithOtp({
     email,
   });
 
@@ -79,7 +83,7 @@ async function loginWithEmail(email) {
 }
 
 async function getUser() {
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await supabaseClient.auth.getUser();
   if (error) {
     console.error(error);
     return null;
@@ -94,7 +98,7 @@ async function savePledge(amount) {
     return;
   }
 
-  const { error } = await supabase.from('pledges').insert([
+  const { error } = await supabaseClient.from('pledges').insert([
     {
       user_id: user.id,
       amount: Number(amount),
@@ -124,7 +128,7 @@ function updateAuthDisplay(user) {
 }
 
 async function logout() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
   if (error) console.error(error);
   state.loggedIn = false;
   state.user = null;
@@ -134,7 +138,7 @@ async function logout() {
 }
 
 async function loadPledgeStats() {
-  const { data: pledges, error } = await supabase
+  const { data: pledges, error } = await supabaseClient
     .from('pledges')
     .select('amount, user_id');
 
@@ -367,9 +371,9 @@ function init() {
 }
 
 function setupRealtime() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
-  supabase
+  supabaseClient
     .channel('pledges')
     .on(
       'postgres_changes',
