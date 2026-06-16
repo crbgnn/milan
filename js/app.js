@@ -37,7 +37,7 @@ const fanSelectors = {
 const state = {
   loggedIn: false,
   user: null,
-  selectedAmount: 500,
+  selectedAmount: null,
   stats: {
     users: 0,
     count: 0,
@@ -55,7 +55,7 @@ function loadState() {
   } catch (error) {
     console.warn('Could not load auth state', error);
   }
-}
+},
 
 function saveAuthState() {
   localStorage.setItem(STATE_KEY, JSON.stringify({
@@ -139,6 +139,10 @@ async function getUser() {
 
 async function savePledge() {
   const amount = state.selectedAmount;
+  if (!amount) {
+    alert('Seleziona una fascia prima di confermare');
+    return;
+  }
   const btn = selectors.pledgeButton;
   if (!btn) return;
 
@@ -172,14 +176,18 @@ async function savePledge() {
       return;
     }
 
-    const pledgeData = await loadPledgeStats();
-    renderStats(pledgeData);
+    // Refresh full stats from Supabase
+    await loadStats();
 
-    btn.textContent = '✓ Partecipazione registrata!';
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 2000);
+    // Reset selection and disable button
+    selectors.tierButtons.forEach((b) => b.classList.remove('selected'));
+    state.selectedAmount = null;
+    if (selectors.pledgeButton) selectors.pledgeButton.disabled = true;
+
+    // Confirmation message
+    alert('✅ Dichiarazione registrata');
+    btn.textContent = originalText;
+    btn.disabled = false;
   } catch (err) {
     console.error('Unexpected error:', err);
     alert('Errore inatteso. Riprova.');
@@ -209,6 +217,12 @@ function updateAuthDisplay(user) {
     if (selectors.participation) {
       selectors.participation.style.display = 'none';
     }
+    // Clear any selected tier and disable pledge button on logout
+    if (selectors.tierButtons) {
+      selectors.tierButtons.forEach((b) => b.classList.remove('selected'));
+    }
+    state.selectedAmount = null;
+    if (selectors.pledgeButton) selectors.pledgeButton.disabled = true;
   }
 }
 
@@ -444,6 +458,7 @@ function setupEvents() {
       selectors.tierButtons.forEach((btn) => btn.classList.remove('selected'));
       button.classList.add('selected');
       state.selectedAmount = Number(button.dataset.amount);
+      if (selectors.pledgeButton) selectors.pledgeButton.disabled = false;
     });
   });
 }

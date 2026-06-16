@@ -305,6 +305,13 @@ line-height:1.5;
   margin-bottom:10px;
 }
 
+/* Pledge tier selection styles */
+.tier-button{ position:relative; border:1px solid rgba(255,255,255,.08); }
+.tier-button.selected{ border:2px solid #C41C23; background:rgba(196,28,35,0.06); }
+.tier-button.selected::after{ content:"✓ Selezionato"; position:absolute; right:8px; top:8px; font-size:12px; color:#C41C23; }
+
+.btn[disabled]{ opacity:0.5; cursor:not-allowed; }
+
 footer{
 text-align:center;
 font-size:10px;
@@ -380,7 +387,7 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
     <button class="btn google tier-button" data-amount="5000" style="flex:1 1 120px; min-width:120px;">5.000€</button>
     <button class="btn google tier-button" data-amount="15000" style="flex:1 1 120px; min-width:120px;">15.000€+</button>
   </div>
-  <button id="pledgeButton" onclick="savePledge()" class="btn google" style="width:100%; margin-top:12px;">Conferma partecipazione</button>
+  <button id="pledgeButton" onclick="savePledge()" class="btn google" style="width:100%; margin-top:12px;" disabled>Conferma partecipazione</button>
 </div>
 
 <div class="cta-sub" style="margin-top:12px;">
