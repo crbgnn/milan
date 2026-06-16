@@ -154,6 +154,8 @@ async function recoverSession() {
       updateAuthDisplay(data.session.user);
       // Load any existing pledge for this user
       fetchUserPledge(data.session.user.id).catch((e) => console.error(e));
+      // Upsert profile with country info
+      upsertProfile(data.session.user).catch((e) => console.error(e));
       return data.session.user;
     }
   } catch (err) {
@@ -173,6 +175,8 @@ function setupAuthListener() {
       loadStats();
       // Load any existing pledge for this user
       fetchUserPledge(session.user.id).catch((e) => console.error(e));
+      // Upsert profile with country info
+      upsertProfile(session.user).catch((e) => console.error(e));
     } else {
       state.loggedIn = false;
       state.user = null;
@@ -414,6 +418,107 @@ function renderStats(data) {
   if (fanSelectors.totalCapital) {
     fanSelectors.totalCapital.textContent = formatCurrency(state.stats.total);
   }
+
+  // Update top countries aggregation (non-blocking)
+  loadCountryTotals().catch((e) => {
+    console.error('Error loading country totals:', e);
+  });
+}
+
+function getCountryFromLocale() {
+  try {
+    const locale = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toString();
+    if (!locale) return 'Unknown';
+    const parts = locale.split(/[-_]/);
+    const region = parts[1] || parts[0];
+    if (!region) return 'Unknown';
+    const code = region.toUpperCase();
+    try {
+      const dn = new Intl.DisplayNames(['en'], { type: 'region' });
+      const name = dn.of(code);
+      return name || code;
+    } catch (err) {
+      return code;
+    }
+  } catch (err) {
+    return 'Unknown';
+  }
+}
+
+async function upsertProfile(user) {
+  if (!user || !user.id) return null;
+  const country = getCountryFromLocale() || 'Unknown';
+  const profile = {
+    user_id: user.id,
+    email: user.email || null,
+    full_name: (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || null,
+    country,
+  };
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .upsert([profile], { onConflict: 'user_id' });
+
+    if (error) {
+      console.error('Error upserting profile:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Unexpected error upserting profile:', err);
+    return null;
+  }
+}
+
+async function loadCountryTotals() {
+  if (!fanSelectors.countryList) return;
+
+  try {
+    const { data: pledges, error: pledgesErr } = await supabaseClient
+      .from('pledges')
+      .select('amount, user_id');
+
+    if (pledgesErr) {
+      console.error('Error loading pledges for country totals:', pledgesErr);
+      fanSelectors.countryList.innerHTML = '<div style="color:#777; font-size:12px;">Errore caricamento dati paesi.</div>';
+      return;
+    }
+
+    const { data: profiles, error: profilesErr } = await supabaseClient
+      .from('profiles')
+      .select('user_id, country');
+
+    const profileMap = new Map();
+    if (!profilesErr && Array.isArray(profiles)) {
+      profiles.forEach((p) => {
+        profileMap.set(p.user_id, p.country || 'Unknown');
+      });
+    }
+
+    const countryTotals = {};
+    (pledges || []).forEach((p) => {
+      const country = profileMap.get(p.user_id) || 'Unknown';
+      const amt = Number(p.amount) || 0;
+      countryTotals[country] = (countryTotals[country] || 0) + amt;
+    });
+
+    // Convert to array and sort
+    const rows = Object.keys(countryTotals).map((c) => ({ country: c, total: countryTotals[c] }));
+    rows.sort((a, b) => b.total - a.total);
+
+    if (rows.length === 0) {
+      fanSelectors.countryList.innerHTML = '<div style="color:#777; font-size:12px;">Dati paesi disponibili tramite Supabase.</div>';
+      return;
+    }
+
+    // Render top countries
+    const html = rows.slice(0, 10).map((r) => `<div style="display:flex;justify-content:space-between;padding:6px 0;"><span>${r.country}</span><strong>${formatCurrency(r.total)}</strong></div>`).join('');
+    fanSelectors.countryList.innerHTML = html;
+  } catch (err) {
+    console.error('Unexpected error loading country totals:', err);
+    fanSelectors.countryList.innerHTML = '<div style="color:#777; font-size:12px;">Dati paesi non disponibili.</div>';
+  }
 }
 
 async function loadStats() {
@@ -537,6 +642,7 @@ async function completeLogin(userData) {
   // Fetch any existing pledge for this user
   if (userData && userData.id) {
     fetchUserPledge(userData.id).catch((e) => console.error(e));
+    upsertProfile(userData).catch((e) => console.error(e));
   }
 }
 
@@ -583,6 +689,7 @@ async function init() {
     updateCtaText();
     // ensure user pledge is loaded
     fetchUserPledge(state.user.id).catch((e) => console.error(e));
+    upsertProfile(state.user).catch((e) => console.error(e));
   }
   setupEvents();
   loadStats();
