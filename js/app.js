@@ -55,9 +55,7 @@ function loadState() {
   } catch (error) {
     console.warn('Could not load auth state', error);
   }
-
-function saveAuthState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify({
+  }
     loggedIn: state.loggedIn,
     user: state.user,
   }));
