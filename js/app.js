@@ -295,7 +295,7 @@ function renderStats(data) {
   }
 }
 
-async async function loadStats() {
+async function loadStats() {
   const pledgeData = await loadPledgeStats();
   renderStats(pledgeData);
 }
@@ -485,5 +485,7 @@ window.loginWithGoogle = loginWithGoogle;
 window.loginWithEmail = loginWithEmail;
 window.savePledge = savePledge;
 window.getUser = getUser;
+window.loadStats = loadStats;
+window.renderStats = renderStats;
 
 init();
