@@ -321,8 +321,8 @@ padding:30px 16px;
 <div class="topbar">
 
 <div class="progress-wrap">
-<span><strong id="topProgressValue">9.59%</strong> verso controllo</span>
-<span><strong id="topCapitalValue">€95.905.233</strong> / €1.000.000.000</span>
+<span><strong id="topProgressValue">0%</strong> verso controllo</span>
+<span><strong id="topCapitalValue">€0</strong> / €1.000.000.000</span>
 </div>
 
 <div class="bar">
@@ -337,21 +337,21 @@ padding:30px 16px;
 <div class="badge">Progetto indipendente • non ufficiale</div>
 
 <div class="live">
-  <div class="live-line">🔥 <strong><span class="stat-users">88.606</span></strong> tifosi già verificati</div>
-  <div class="live-line">📊 <strong><span class="stat-commitments">79.134</span></strong> dichiarazioni in tempo reale</div>
+  <div class="live-line">🔥 <strong><span id="liveUsers">0</span></strong> tifosi già verificati</div>
+  <div class="live-line">📊 <strong><span id="liveCommitments">0</span></strong> dichiarazioni in tempo reale</div>
 </div>
 
 <div class="hero-stats">
   <div class="stat">
-    <div class="stat-value" id="stat-users">88.606</div>
+    <div class="stat-value" id="stat-users">0</div>
     <div class="stat-label">tifosi verificati</div>
   </div>
   <div class="stat">
-    <div class="stat-value" id="stat-commitments">79.134</div>
+    <div class="stat-value" id="stat-commitments">0</div>
     <div class="stat-label">impegni dichiarati</div>
   </div>
   <div class="stat">
-    <div class="stat-value" id="stat-euro">€98.569.641</div>
+    <div class="stat-value" id="stat-euro">€0</div>
     <div class="stat-label">valore indicativo</div>
   </div>
 </div>
@@ -374,11 +374,13 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 </div>
 
 <div class="participation" style="margin-top:16px; display:none;">
-  <label style="font-size:12px; color:#ccc; display:block; margin-bottom:8px;">Importo di partecipazione</label>
+  <label style="font-size:12px; color:#ccc; display:block; margin-bottom:8px;">Scegli una fascia di investimento</label>
   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <input id="pledgeAmount" type="number" min="0" value="500" style="flex:1 1 140px; min-width:120px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff;" />
-    <button id="pledgeButton" onclick="savePledge(document.getElementById('pledgeAmount').value)" class="btn google" style="flex:1 1 180px; min-width:140px;">Registra partecipazione</button>
+    <button class="btn google tier-button" data-amount="500" style="flex:1 1 120px; min-width:120px;">500€</button>
+    <button class="btn google tier-button" data-amount="5000" style="flex:1 1 120px; min-width:120px;">5.000€</button>
+    <button class="btn google tier-button" data-amount="15000" style="flex:1 1 120px; min-width:120px;">15.000€+</button>
   </div>
+  <button id="pledgeButton" onclick="savePledge()" class="btn google" style="width:100%; margin-top:12px;">Conferma partecipazione</button>
 </div>
 
 <div class="cta-sub" style="margin-top:12px;">

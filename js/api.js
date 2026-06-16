@@ -13,20 +13,10 @@ function safeParse(value) {
 }
 
 export async function getStats() {
-  const saved = safeParse(localStorage.getItem(STORAGE_KEYS.stats));
-  if (saved && typeof saved === 'object') {
-    return saved;
-  }
-
-  return {
-    verifiedUsers: 88004,
-    commitments: 79208,
-    euroValue: 94109549,
-  };
+  return null;
 }
 
 export async function saveStats(stats) {
-  localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(stats));
   return stats;
 }
 

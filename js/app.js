@@ -1,4 +1,4 @@
-import { getStats, saveStats, saveUser } from './api.js';
+import { saveUser } from './api.js';
 
 const selectors = {
   heroLive: document.querySelector('.hero .live'),
@@ -8,14 +8,16 @@ const selectors = {
   topProgressValue: document.getElementById('topProgressValue'),
   topCapitalValue: document.getElementById('topCapitalValue'),
   progressFill: document.getElementById('progressFill'),
+  liveUsers: document.getElementById('liveUsers'),
+  liveCommitments: document.getElementById('liveCommitments'),
   cta: document.querySelector('.cta'),
   loginContainer: document.querySelector('.login'),
   emailBtn: document.querySelector('.btn.alt'),
   authStatus: document.getElementById('authStatus'),
   logoutButton: document.getElementById('logoutButton'),
   participation: document.querySelector('.participation'),
-  pledgeAmount: document.getElementById('pledgeAmount'),
   pledgeButton: document.getElementById('pledgeButton'),
+  tierButtons: document.querySelectorAll('.tier-button'),
 };
 
 const STATE_KEY = 'milan_auth';
@@ -26,16 +28,6 @@ const SUPABASE_KEY = 'sb_publishable_-9wJdCJPLLfL9dqAARXNqA_iPqD2ib8';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window.supabaseClient = supabaseClient;
 
-const fanData = [
-  { country: 'Italia', users: 25000, avg: 650 },
-  { country: 'Brasile', users: 18000, avg: 780 },
-  { country: 'USA', users: 12000, avg: 900 },
-  { country: 'UK', users: 8000, avg: 750 },
-  { country: 'Francia', users: 6000, avg: 700 },
-];
-
-let commitmentBoost = 0;
-
 const fanSelectors = {
   totalUsers: document.getElementById('totalUsers'),
   totalCapital: document.getElementById('totalCapital'),
@@ -45,10 +37,11 @@ const fanSelectors = {
 const state = {
   loggedIn: false,
   user: null,
+  selectedAmount: 500,
   stats: {
-    verifiedUsers: 88004,
-    commitments: 79208,
-    euroValue: 94109549,
+    users: 0,
+    count: 0,
+    total: 0,
   },
 };
 
@@ -144,13 +137,8 @@ async function getUser() {
   return data.user || null;
 }
 
-async function savePledge(amount) {
-  const pledgeAmount = Number(amount);
-  if (!pledgeAmount || pledgeAmount < 0) {
-    alert('Inserisci un importo valido');
-    return;
-  }
-
+async function savePledge() {
+  const amount = state.selectedAmount;
   const btn = selectors.pledgeButton;
   if (!btn) return;
 
@@ -167,12 +155,12 @@ async function savePledge(amount) {
       return;
     }
 
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
       .from('pledges')
       .insert([
         {
           user_id: user.id,
-          amount: pledgeAmount,
+          amount,
         },
       ]);
 
@@ -182,10 +170,6 @@ async function savePledge(amount) {
       btn.textContent = originalText;
       btn.disabled = false;
       return;
-    }
-
-    if (selectors.pledgeAmount) {
-      selectors.pledgeAmount.value = '500';
     }
 
     const pledgeData = await loadPledgeStats();
@@ -239,23 +223,24 @@ async function logout() {
 }
 
 async function loadPledgeStats() {
-  const { data: pledges, error } = await supabaseClient
+  const { data: pledges, error, count } = await supabaseClient
     .from('pledges')
-    .select('amount, user_id');
+    .select('amount, user_id', { count: 'exact' });
 
   if (error) {
     console.error('Error loading pledge stats:', error);
     return null;
   }
 
-  if (!pledges) return { totalCapital: 0, totalUsers: 0 };
-
-  const totalCapital = pledges.reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalUsers = new Set(pledges.map(p => p.user_id)).size;
+  const rows = pledges || [];
+  const total = rows.reduce((sum, p) => sum + Number(p.amount), 0);
+  const users = new Set(rows.map((p) => p.user_id)).size;
+  const countValue = typeof count === 'number' ? count : rows.length;
 
   return {
-    totalCapital,
-    totalUsers,
+    users,
+    count: countValue,
+    total,
   };
 }
 
@@ -263,54 +248,56 @@ function renderStats(data) {
   if (!data) return;
 
   state.stats = {
-    verifiedUsers: data.totalUsers || 0,
-    commitments: data.totalCapital ? Math.max(1, Math.round(data.totalCapital / 500)) : 0,
-    euroValue: data.totalCapital || 0,
+    users: data.users || 0,
+    count: data.count || 0,
+    total: data.total || 0,
   };
 
   if (selectors.topCapitalValue) {
-    selectors.topCapitalValue.textContent = formatCurrency(state.stats.euroValue);
+    selectors.topCapitalValue.textContent = formatCurrency(state.stats.total);
   }
 
   if (selectors.progressFill) {
-    const ratio = Math.min(state.stats.euroValue / 1000000000, 1);
+    const ratio = Math.min(state.stats.total / 1000000000, 1);
     selectors.progressFill.style.width = `${ratio * 100}%`;
   }
 
-  updateHeroText();
+  if (selectors.topProgressValue) {
+    selectors.topProgressValue.textContent = `${Math.round(Math.min(state.stats.total / 1000000000, 1) * 100)}%`;
+  }
+
+  if (selectors.liveUsers) {
+    selectors.liveUsers.textContent = formatNumber(state.stats.users);
+  }
+
+  if (selectors.liveCommitments) {
+    selectors.liveCommitments.textContent = formatNumber(state.stats.count);
+  }
 
   if (selectors.statUsers) {
-    selectors.statUsers.textContent = formatNumber(state.stats.verifiedUsers);
+    selectors.statUsers.textContent = formatNumber(state.stats.users);
   }
 
   if (selectors.statCommitments) {
-    selectors.statCommitments.textContent = formatNumber(getBoostedCommitments());
+    selectors.statCommitments.textContent = formatNumber(state.stats.count);
   }
 
   if (selectors.statEuro) {
-    selectors.statEuro.textContent = formatCurrency(state.stats.euroValue);
+    selectors.statEuro.textContent = formatCurrency(state.stats.total);
   }
 
   if (fanSelectors.totalUsers) {
-    fanSelectors.totalUsers.textContent = formatNumber(state.stats.verifiedUsers);
+    fanSelectors.totalUsers.textContent = formatNumber(state.stats.users);
   }
 
   if (fanSelectors.totalCapital) {
-    fanSelectors.totalCapital.textContent = formatCurrency(state.stats.euroValue);
+    fanSelectors.totalCapital.textContent = formatCurrency(state.stats.total);
   }
 }
 
-async function loadStats() {
-  calculateFanCapital();
-
+async async function loadStats() {
   const pledgeData = await loadPledgeStats();
   renderStats(pledgeData);
-
-  getStats().then((stats) => {
-    state.stats = stats;
-    animateStats();
-    scheduleStatUpdates();
-  });
 }
 
 function formatNumber(value) {
@@ -322,38 +309,12 @@ function formatCurrency(value) {
 }
 
 function calculateFanCapital() {
-  if (!fanSelectors.totalUsers || !fanSelectors.totalCapital || !fanSelectors.countryList) return;
-
-  let totalUsers = 0;
-  let totalCapital = 0;
-  fanSelectors.countryList.innerHTML = '';
-
-  fanData.forEach(c => {
-    const countryTotal = c.users * c.avg;
-
-    totalUsers += c.users;
-    totalCapital += countryTotal;
-
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.justifyContent = 'space-between';
-    row.style.flexWrap = 'wrap';
-    row.style.gap = '8px';
-    row.innerHTML = `
-      <span>${c.country}</span>
-      <span style="color:#fff;">${formatCurrency(countryTotal)}</span>
-    `;
-
-    fanSelectors.countryList.appendChild(row);
-  });
-
-  fanSelectors.totalUsers.textContent = formatNumber(totalUsers);
-  fanSelectors.totalCapital.textContent = formatCurrency(totalCapital);
-  commitmentBoost = Math.max(3, Math.round(totalUsers / 800));
+  if (!fanSelectors.countryList) return;
+  fanSelectors.countryList.innerHTML = '<div style="color:#777; font-size:12px; line-height:1.6;">Dati paesi disponibili tramite Supabase.</div>';
 }
 
 function getBoostedCommitments() {
-  return state.stats.commitments + commitmentBoost;
+  return state.stats.count;
 }
 
 function animateCount(element, from, to, duration = 900, prefix = '') {
@@ -373,7 +334,7 @@ function animateCount(element, from, to, duration = 900, prefix = '') {
 }
 
 function updateHeroText() {
-  const verified = formatNumber(state.stats.verifiedUsers);
+  const verified = formatNumber(state.stats.users);
   const commitments = formatNumber(getBoostedCommitments());
   if (selectors.heroLive) {
     selectors.heroLive.innerHTML = `🔥 ${verified} tifosi già verificati<br>📊 ${commitments} dichiarazioni in tempo reale`;
@@ -383,40 +344,18 @@ function updateHeroText() {
 function animateStats() {
   updateHeroText();
   if (selectors.statUsers) {
-    animateCount(selectors.statUsers, 0, state.stats.verifiedUsers);
+    animateCount(selectors.statUsers, 0, state.stats.users);
   }
   if (selectors.statCommitments) {
-    animateCount(selectors.statCommitments, 0, getBoostedCommitments());
+    animateCount(selectors.statCommitments, 0, state.stats.count);
   }
   if (selectors.statEuro) {
-    animateCount(selectors.statEuro, 0, state.stats.euroValue, 1000, '€');
+    animateCount(selectors.statEuro, 0, state.stats.total, 1000, '€');
   }
 }
 
 function scheduleStatUpdates() {
-  setInterval(async () => {
-    fanData.forEach(c => {
-      c.users += Math.floor(Math.random() * 5);
-    });
-
-    calculateFanCapital();
-    const pledgeData = await loadPledgeStats();
-    renderStats(pledgeData);
-
-    const nextStats = {
-      verifiedUsers: state.stats.verifiedUsers + Math.floor(Math.random() * 15) + 5,
-      commitments: state.stats.commitments + Math.floor(Math.random() * 6) + 1,
-      euroValue: state.stats.euroValue + Math.floor(Math.random() * 150000) + 25000,
-    };
-
-    animateCount(selectors.statUsers, state.stats.verifiedUsers, nextStats.verifiedUsers);
-    animateCount(selectors.statCommitments, getBoostedCommitments(), nextStats.commitments + commitmentBoost);
-    animateCount(selectors.statEuro, state.stats.euroValue, nextStats.euroValue, 1200, '€');
-
-    state.stats = nextStats;
-    saveStats(state.stats);
-    updateHeroText();
-  }, 5000);
+  // No fake auto-increment updates. Stats refresh from Supabase in realtime only.
 }
 
 function createBadge() {
@@ -498,6 +437,15 @@ function setupEvents() {
       await logout();
     });
   }
+
+  selectors.tierButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      selectors.tierButtons.forEach((btn) => btn.classList.remove('selected'));
+      button.classList.add('selected');
+      state.selectedAmount = Number(button.dataset.amount);
+    });
+  });
 }
 
 function init() {
