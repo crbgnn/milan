@@ -616,6 +616,12 @@ container.appendChild(wrap);
   try {
     const ctx = canvas.getContext('2d');
     /* global Chart */
+
+    // Gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, 'rgba(196,28,35,0.35)');
+    gradient.addColorStop(1, 'rgba(196,28,35,0)');
+
     window.fanChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -623,28 +629,65 @@ container.appendChild(wrap);
         datasets: [
           {
             data: dataPoints,
-            borderColor: '#C41C23',
-            backgroundColor: 'rgba(196,28,35,0.08)',
+            borderColor: '#ff2a2a',
+            backgroundColor: gradient,
             fill: true,
             pointRadius: 0,
-            borderWidth: 2,
-            tension: 0.2,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#ff2a2a',
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 2,
+            borderWidth: 2.5,
+            tension: 0.4,
           },
         ],
       },
       options: {
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuart',
+        },
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         plugins: {
           legend: { display: false },
           title: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10,10,10,0.85)',
+            borderColor: 'rgba(196,28,35,0.4)',
+            borderWidth: 1,
+            titleColor: '#aaa',
+            titleFont: { size: 11 },
+            bodyColor: '#fff',
+            bodyFont: { size: 13, weight: '700' },
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: (ctx) => ' €' + ctx.parsed.y.toLocaleString('it-IT'),
+            },
+          },
         },
         scales: {
           x: {
-            ticks: { color: '#ccc', maxRotation: 0 },
-            grid: { color: 'rgba(255,255,255,0.03)' },
+            ticks: {
+              color: '#666',
+              maxRotation: 0,
+              maxTicksLimit: 5,
+              font: { size: 10 },
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            border: { color: 'rgba(255,255,255,0.06)' },
           },
           y: {
-            ticks: { color: '#ccc' },
-            grid: { color: 'rgba(255,255,255,0.03)' },
+            ticks: {
+              color: '#666',
+              font: { size: 10 },
+              callback: (v) => '€' + v.toLocaleString('it-IT'),
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            border: { color: 'rgba(255,255,255,0.06)' },
           },
         },
         maintainAspectRatio: false,
