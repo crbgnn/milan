@@ -578,36 +578,36 @@ async function loadFanCapitalTrend() {
   });
 
   // Create container below the index card
-  const innerCard = fanSelectors.countryList.closest('div[style]') || fanSelectors.countryList.parentElement;
-  const cardWrapper = innerCard ? innerCard.parentElement : null;
-  if (!cardWrapper) return;
+  const container = document.getElementById('fanCapitalChart');
+if (!container) return;
 
-  // Avoid adding duplicate chart
-  const old = document.getElementById('fanTrendChartWrap');
-if (old) old.remove();
+// hard safety: evita duplicati DOM
+const existing = document.getElementById('fanTrendChartWrap');
+if (existing) existing.remove();
 
-  const wrap = document.createElement('div');
-  wrap.id = 'fanTrendChartWrap';
-  wrap.style.marginTop = '12px';
-  wrap.style.background = 'rgba(255,255,255,0.02)';
-  wrap.style.border = '1px solid rgba(255,255,255,.06)';
-  wrap.style.borderRadius = '12px';
-  wrap.style.padding = '10px';
+const wrap = document.createElement('div');
+wrap.id = 'fanTrendChartWrap';
+wrap.style.marginTop = '12px';
+wrap.style.background = 'rgba(255,255,255,0.02)';
+wrap.style.border = '1px solid rgba(255,255,255,.06)';
+wrap.style.borderRadius = '12px';
+wrap.style.padding = '10px';
 
-  const title = document.createElement('div');
-  title.textContent = 'Fan Capital Trend';
-  title.style.color = '#fff';
-  title.style.fontSize = '13px';
-  title.style.fontWeight = '700';
-  title.style.marginBottom = '8px';
-  wrap.appendChild(title);
+const title = document.createElement('div');
+title.textContent = 'Fan Capital Trend';
+title.style.color = '#fff';
+title.style.fontSize = '13px';
+title.style.fontWeight = '700';
+title.style.marginBottom = '8px';
 
-  const canvas = document.createElement('canvas');
-  canvas.style.width = '100%';
-  canvas.style.height = '200px';
-  wrap.appendChild(canvas);
+wrap.appendChild(title);
 
-  cardWrapper.insertAdjacentElement('afterend', wrap);
+const canvas = document.createElement('canvas');
+canvas.style.width = '100%';
+canvas.style.height = '200px';
+
+wrap.appendChild(canvas);
+container.appendChild(wrap);
 
   // Render Chart.js line chart
   try {
