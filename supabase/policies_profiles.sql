@@ -25,6 +25,17 @@ CREATE POLICY IF NOT EXISTS profiles_update_own
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
+-- Additional policy to ensure upsert (INSERT ... ON CONFLICT DO UPDATE)
+-- is allowed for authenticated users when the target user_id matches auth.uid().
+-- Some Postgres/Supabase setups evaluate INSERT and UPDATE separately during upsert;
+-- having both explicit INSERT and UPDATE policies with the same checks prevents
+-- 'new row violates row-level security policy' errors during upsert.
+CREATE POLICY IF NOT EXISTS profiles_upsert_support
+  ON public.profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
 -- 2) Public access: allow limited SELECT for aggregation purposes only
 -- IMPORTANT: RLS policies control row-level visibility, not column-level.
 -- To avoid exposing sensitive fields beyond country aggregation, prefer
