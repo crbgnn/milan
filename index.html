@@ -225,6 +225,86 @@ color:#ccc;
 line-height:1.5;
 }
 
+.hero-stats{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:18px auto 24px;
+  max-width:720px;
+}
+
+.stat{
+  flex:1 1 140px;
+  min-width:120px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:14px 12px;
+  text-align:center;
+}
+
+.stat-value{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:6px;
+  color:#fff;
+}
+
+.stat-label{
+  font-size:11px;
+  color:#ccc;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.live-line{
+  line-height:1.5;
+  margin-bottom:4px;
+}
+
+.verified-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 12px;
+  font-size:11px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  margin-top:14px;
+}
+
+.otp-form input,
+.otp-form button{
+  width:100%;
+}
+
+.otp-form input{
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  color:#fff;
+  margin-bottom:10px;
+}
+
+.otp-form button{
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#ff0000,#ff4d4d);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.otp-form p{
+  font-size:12px;
+  color:#ccc;
+  margin-bottom:10px;
+}
+
 footer{
 text-align:center;
 font-size:10px;
@@ -257,8 +337,23 @@ padding:30px 16px;
 <div class="badge">Progetto indipendente • non ufficiale</div>
 
 <div class="live">
-🔥 85.432 tifosi già verificati<br>
-📊 dati aggregati in tempo reale
+  <div class="live-line">🔥 <strong><span class="stat-users">85.432</span></strong> tifosi già verificati</div>
+  <div class="live-line">📊 <strong><span class="stat-commitments">12.470</span></strong> dichiarazioni in tempo reale</div>
+</div>
+
+<div class="hero-stats">
+  <div class="stat">
+    <div class="stat-value" id="stat-users">85.432</div>
+    <div class="stat-label">tifosi verificati</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-commitments">12.470</div>
+    <div class="stat-label">impegni dichiarati</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-euro">€72.400.000</div>
+    <div class="stat-label">valore indicativo</div>
+  </div>
 </div>
 
 <h1>
@@ -288,7 +383,7 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 <h3>Verifica identità</h3>
 
 <a href="#" class="btn google">Continua con Google</a>
-<a href="#" class="btn alt">Email + Telefono</a>
+<a href="#" class="btn alt">Email + OTP</a>
 
 </div>
 
@@ -327,5 +422,6 @@ Valutare se esiste una base sufficiente di partecipazione per un eventuale model
 Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
 </footer>
 
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
