@@ -67,6 +67,9 @@ function saveAuthState() {
 async function loginWithGoogle() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo: 'https://crbgnn.github.io/milan/'
+    }
   });
 
   if (error) console.error(error);
