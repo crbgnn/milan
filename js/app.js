@@ -7,8 +7,9 @@ const selectors = {
   statEuro: document.getElementById('stat-euro'),
   cta: document.querySelector('.cta'),
   loginContainer: document.querySelector('.login'),
-  googleBtn: document.querySelector('.btn.google'),
   emailBtn: document.querySelector('.btn.alt'),
+  authStatus: document.getElementById('authStatus'),
+  logoutButton: document.getElementById('logoutButton'),
 };
 
 const STATE_KEY = 'milan_auth';
@@ -59,8 +60,107 @@ function saveAuthState() {
   }));
 }
 
-function loadStats() {
+async function loginWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+  });
+
+  if (error) console.error(error);
+  return data;
+}
+
+async function loginWithEmail(email) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+  });
+
+  if (error) console.error(error);
+  return data;
+}
+
+async function getUser() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error(error);
+    return null;
+  }
+  return data.user;
+}
+
+async function savePledge(amount) {
+  const user = await getUser();
+  if (!user) {
+    alert('Devi fare login prima');
+    return;
+  }
+
+  const { error } = await supabase.from('pledges').insert([
+    {
+      user_id: user.id,
+      amount: Number(amount),
+    },
+  ]);
+
+  if (error) {
+    console.error(error);
+  } else {
+    alert('Partecipazione registrata');
+    loadPledgeStats();
+  }
+}
+
+function updateAuthDisplay(user) {
+  if (!selectors.authStatus || !selectors.logoutButton) return;
+
+  if (user) {
+    selectors.authStatus.style.display = 'block';
+    selectors.authStatus.innerHTML = `Logged in as <strong>${user.email}</strong>`;
+    selectors.logoutButton.style.display = 'block';
+  } else {
+    selectors.authStatus.style.display = 'none';
+    selectors.authStatus.innerHTML = '';
+    selectors.logoutButton.style.display = 'none';
+  }
+}
+
+async function logout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error(error);
+  state.loggedIn = false;
+  state.user = null;
+  saveAuthState();
+  updateAuthDisplay(null);
+  updateCtaText();
+}
+
+async function loadPledgeStats() {
+  const { data: pledges, error } = await supabase
+    .from('pledges')
+    .select('amount, user_id');
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  if (!pledges) return;
+
+  const totalCapital = pledges.reduce((sum, p) => sum + Number(p.amount), 0);
+  const uniqueUsers = new Set(pledges.map(p => p.user_id)).size;
+
+  if (fanSelectors.totalUsers) {
+    fanSelectors.totalUsers.innerText = formatNumber(uniqueUsers);
+  }
+
+  if (fanSelectors.totalCapital) {
+    fanSelectors.totalCapital.innerText = formatCurrency(totalCapital);
+  }
+}
+
+async function loadStats() {
   calculateFanCapital();
+  await loadPledgeStats();
+
   getStats().then((stats) => {
     state.stats = stats;
     animateStats();
@@ -141,12 +241,13 @@ function animateStats() {
 }
 
 function scheduleStatUpdates() {
-  setInterval(() => {
+  setInterval(async () => {
     fanData.forEach(c => {
       c.users += Math.floor(Math.random() * 5);
     });
 
     calculateFanCapital();
+    await loadPledgeStats();
 
     const increments = {
       verifiedUsers: Math.floor(Math.random() * 15) + 5,
@@ -212,52 +313,9 @@ function openOtpForm() {
     event.preventDefault();
     const email = form.querySelector('input[name="email"]').value.trim();
     if (!email) return;
-    const otp = generateOtp();
-    localStorage.setItem(OTP_KEY, JSON.stringify({ email, otp }));
-    console.log('OTP generato (mock):', otp);
-    showOtpInputForm(email);
+    await loginWithEmail(email);
+    form.outerHTML = `<p style="font-size:12px;color:#ccc;margin-top:10px;">OTP inviato a ${email}. Controlla la tua email per completare l'accesso.</p>`;
   });
-}
-
-function showOtpInputForm(email) {
-  const existing = selectors.loginContainer.querySelector('.otp-form');
-  if (existing) existing.remove();
-
-  const form = document.createElement('form');
-  form.className = 'otp-form';
-  form.style.marginTop = '14px';
-  form.innerHTML = `
-    <p style="font-size:12px;color:#ccc;margin-bottom:10px;">OTP inviato a ${email} (mock). Controlla la console se necessario.</p>
-    <label style="display:block;font-size:12px;color:#ccc;margin-bottom:8px;">Inserisci OTP</label>
-    <input type="text" name="otp" inputmode="numeric" pattern="\\d{6}" placeholder="123456" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;margin-bottom:10px;" />
-    <button type="submit" class="btn google" style="width:100%;">Verifica OTP</button>
-  `;
-  selectors.loginContainer.appendChild(form);
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const otpInput = form.querySelector('input[name="otp"]').value.trim();
-    verifyOtp(otpInput, email);
-  });
-}
-
-function generateOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-async function verifyOtp(value, email) {
-  const stored = safeParse(localStorage.getItem(OTP_KEY));
-  if (!stored || stored.email !== email) {
-    alert('OTP non valido. Riprova.');
-    return;
-  }
-
-  if (stored.otp !== value) {
-    alert('OTP errato. Verifica il codice e riprova.');
-    return;
-  }
-
-  await completeLogin({ email, provider: 'otp' });
 }
 
 async function completeLogin(userData) {
@@ -282,16 +340,19 @@ function safeParse(value) {
 }
 
 function setupEvents() {
-  selectors.googleBtn.addEventListener('click', async (event) => {
-    event.preventDefault();
-    const mockUser = { provider: 'google', email: 'utente@gmail.com' };
-    await completeLogin(mockUser);
-  });
+  if (selectors.emailBtn) {
+    selectors.emailBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      openOtpForm();
+    });
+  }
 
-  selectors.emailBtn.addEventListener('click', (event) => {
-    event.preventDefault();
-    openOtpForm();
-  });
+  if (selectors.logoutButton) {
+    selectors.logoutButton.addEventListener('click', async (event) => {
+      event.preventDefault();
+      await logout();
+    });
+  }
 }
 
 function init() {
@@ -302,6 +363,31 @@ function init() {
   }
   setupEvents();
   loadStats();
+  setupRealtime();
 }
+
+function setupRealtime() {
+  if (!supabase) return;
+
+  supabase
+    .channel('pledges')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'pledges',
+      },
+      () => {
+        loadPledgeStats();
+      }
+    )
+    .subscribe();
+}
+
+window.loginWithGoogle = loginWithGoogle;
+window.loginWithEmail = loginWithEmail;
+window.savePledge = savePledge;
+window.getUser = getUser;
 
 init();

@@ -365,7 +365,7 @@ IL MILAN AI TIFOSI.<br>
 Una piattaforma indipendente che aggrega dichiarazioni di interesse verificate per valutare la fattibilità di un futuro modello di partecipazione collettiva.
 </p>
 
-<a href="#login" class="cta">
+<a onclick="loginWithGoogle()" class="cta">
 PARTECIPA ORA
 </a>
 
@@ -373,7 +373,15 @@ PARTECIPA ORA
 Minimo indicativo 500€ • Nessun pagamento in questa fase
 </div>
 
-<div class="info">
+<div class="participation" style="margin-top:16px;">
+  <label style="font-size:12px; color:#ccc; display:block; margin-bottom:8px;">Importo di partecipazione</label>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <input id="pledgeAmount" type="number" min="0" value="500" style="flex:1 1 140px; min-width:120px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff;" />
+    <button onclick="savePledge(document.getElementById('pledgeAmount').value)" class="btn google" style="flex:1 1 180px; min-width:140px;">Registra partecipazione</button>
+  </div>
+</div>
+
+<div class="cta-sub" style="margin-top:12px;">
 <strong>Importante:</strong> nessuna transazione viene effettuata. Tutti i dati rappresentano dichiarazioni volontarie e non vincolanti.
 </div>
 
@@ -382,8 +390,11 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 
 <h3>Verifica identità</h3>
 
-<a href="#" class="btn google">Continua con Google</a>
-<a href="#" class="btn alt">Email + OTP</a>
+<a href="#" class="btn google" onclick="event.preventDefault(); loginWithGoogle()">Continua con Google</a>
+<a href="#" class="btn alt" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
+
+<div id="authStatus" class="info" style="display:none; margin-top:12px;"></div>
+<button id="logoutButton" class="btn alt" style="display:none; width:100%; margin-top:10px;">Logout</button>
 
 </div>
 
@@ -459,6 +470,15 @@ Valutare se esiste una base sufficiente di partecipazione per un eventuale model
 <footer>
 Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
 </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://tgaqsjnjwqqnozscdpds.supabase.co"
+const supabaseKey = "sb_publishable_-9wJdCJPLLfL9dqAARXNqA_iPqD2ib8"
+
+const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+</script>
 
 <script type="module" src="js/app.js"></script>
 </body>
