@@ -602,11 +602,14 @@ title.style.marginBottom = '8px';
 
 wrap.appendChild(title);
 
-const canvas = document.createElement('canvas');
-canvas.style.width = '100%';
-canvas.style.height = '200px';
+const canvasWrap = document.createElement('div');
+canvasWrap.style.position = 'relative';
+canvasWrap.style.height = '200px';
+canvasWrap.style.width = '100%';
 
-wrap.appendChild(canvas);
+const canvas = document.createElement('canvas');
+canvasWrap.appendChild(canvas);
+wrap.appendChild(canvasWrap);
 container.appendChild(wrap);
 
   // Render Chart.js line chart
