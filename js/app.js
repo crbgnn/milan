@@ -18,6 +18,7 @@ const OTP_KEY = 'milan_otp';
 const SUPABASE_URL = 'https://tgaqsjnjwqqnozscdpds.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_-9wJdCJPLLfL9dqAARXNqA_iPqD2ib8';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.supabaseClient = supabaseClient;
 
 const fanData = [
   { country: 'Italia', users: 25000, avg: 650 },
