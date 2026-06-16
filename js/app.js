@@ -517,6 +517,138 @@ function formatCurrency(value) {
   return '€' + value.toLocaleString('it-IT');
 }
 
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(e);
+    document.head.appendChild(s);
+  });
+}
+
+async function loadFanCapitalTrend() {
+  // Insert the chart below the Milan Fan Capital Index card
+  if (!fanSelectors.countryList) return;
+
+  // Ensure Chart.js is loaded
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/chart.js');
+  } catch (err) {
+    console.error('Could not load Chart.js:', err);
+    return;
+  }
+
+  // Fetch pledges
+  let pledges = [];
+  try {
+    const { data, error } = await supabaseClient
+      .from('pledges')
+      .select('amount, created_at')
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error loading pledges for trend chart:', error);
+      return;
+    }
+    pledges = Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error('Unexpected error fetching pledges for trend:', err);
+    return;
+  }
+
+  if (!pledges || pledges.length === 0) {
+    // don't render chart if no data
+    return;
+  }
+
+  // Aggregate running total
+  const labels = [];
+  const dataPoints = [];
+  let running = 0;
+  pledges.forEach((p) => {
+    const amt = Number(p.amount) || 0;
+    running += amt;
+    const d = new Date(p.created_at);
+    const label = d.toLocaleDateString('it-IT');
+    labels.push(label);
+    dataPoints.push(running);
+  });
+
+  // Create container below the index card
+  const innerCard = fanSelectors.countryList.closest('div[style]') || fanSelectors.countryList.parentElement;
+  const cardWrapper = innerCard ? innerCard.parentElement : null;
+  if (!cardWrapper) return;
+
+  // Avoid adding duplicate chart
+  if (document.getElementById('fanTrendChartWrap')) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'fanTrendChartWrap';
+  wrap.style.marginTop = '12px';
+  wrap.style.background = 'rgba(255,255,255,0.02)';
+  wrap.style.border = '1px solid rgba(255,255,255,.06)';
+  wrap.style.borderRadius = '12px';
+  wrap.style.padding = '10px';
+
+  const title = document.createElement('div');
+  title.textContent = 'Fan Capital Trend';
+  title.style.color = '#fff';
+  title.style.fontSize = '13px';
+  title.style.fontWeight = '700';
+  title.style.marginBottom = '8px';
+  wrap.appendChild(title);
+
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  canvas.style.height = '200px';
+  wrap.appendChild(canvas);
+
+  cardWrapper.insertAdjacentElement('afterend', wrap);
+
+  // Render Chart.js line chart
+  try {
+    const ctx = canvas.getContext('2d');
+    /* global Chart */
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: dataPoints,
+            borderColor: '#C41C23',
+            backgroundColor: 'rgba(196,28,35,0.08)',
+            fill: true,
+            pointRadius: 0,
+            borderWidth: 2,
+            tension: 0.2,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          title: { display: false },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#ccc', maxRotation: 0 },
+            grid: { color: 'rgba(255,255,255,0.03)' },
+          },
+          y: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.03)' },
+          },
+        },
+        maintainAspectRatio: false,
+      },
+    });
+  } catch (err) {
+    console.error('Error rendering trend chart:', err);
+  }
+}
+
 function calculateFanCapital() {
   if (!fanSelectors.countryList) return;
   fanSelectors.countryList.innerHTML = '<div style="color:#777; font-size:12px; line-height:1.6;">Dati paesi disponibili tramite Supabase.</div>';
@@ -676,6 +808,8 @@ async function init() {
   }
   setupEvents();
   loadStats();
+  // Load fan capital trend chart (non-blocking)
+  loadFanCapitalTrend().catch((e) => console.error('Trend load error', e));
   setupRealtime();
 }
 
