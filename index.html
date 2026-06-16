@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Il Milan ai Tifosi</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#050505;
+color:white;
+overflow-x:hidden;
+}
+
+/* BACKGROUND */
+body::before{
+content:'';
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top,#9b0000 0%,transparent 55%),
+radial-gradient(circle at bottom,#1f0000 0%,transparent 55%);
+opacity:.75;
+z-index:-1;
+}
+
+/* TOP FIXED PROGRESS BAR */
+.topbar{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+z-index:999;
+background:rgba(0,0,0,.85);
+backdrop-filter:blur(12px);
+padding:10px 12px;
+border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.progress-wrap{
+display:flex;
+justify-content:space-between;
+font-size:11px;
+color:#ccc;
+margin-bottom:6px;
+}
+
+.progress-wrap strong{
+color:#fff;
+}
+
+.bar{
+height:8px;
+width:100%;
+background:#222;
+border-radius:999px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+width:7.24%;
+background:linear-gradient(90deg,#ff0000,#ff6a6a);
+}
+
+/* HERO */
+.hero{
+padding:90px 16px 25px;
+text-align:center;
+}
+
+.badge{
+display:inline-block;
+padding:6px 10px;
+font-size:11px;
+border:1px solid rgba(255,255,255,.12);
+border-radius:999px;
+background:rgba(255,255,255,.04);
+margin-bottom:10px;
+}
+
+.live{
+font-size:12px;
+color:#ff5a5a;
+margin-bottom:10px;
+line-height:1.4;
+}
+
+h1{
+font-size:34px;
+font-weight:900;
+line-height:1.05;
+margin-bottom:10px;
+}
+
+h1 span{
+background:linear-gradient(90deg,#ff1e1e,#ffffff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.sub{
+font-size:13px;
+color:#cfcfcf;
+line-height:1.6;
+margin-bottom:18px;
+}
+
+/* CTA */
+.cta{
+display:block;
+width:100%;
+max-width:420px;
+margin:0 auto;
+padding:18px;
+border-radius:16px;
+background:linear-gradient(135deg,#ff0000,#ff4d4d);
+color:white;
+font-size:18px;
+font-weight:900;
+text-decoration:none;
+text-align:center;
+box-shadow:0 0 25px rgba(255,0,0,.4);
+animation:pulse 2s infinite;
+}
+
+.cta-sub{
+font-size:11px;
+color:#bbb;
+margin-top:8px;
+text-align:center;
+}
+
+/* PULSE */
+@keyframes pulse{
+0%{box-shadow:0 0 15px rgba(255,0,0,.3);}
+50%{box-shadow:0 0 40px rgba(255,0,0,.8);}
+100%{box-shadow:0 0 15px rgba(255,0,0,.3);}
+}
+
+/* LOGIN */
+.login{
+margin-top:18px;
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.08);
+border-radius:16px;
+padding:14px;
+}
+
+.login h3{
+font-size:13px;
+margin-bottom:10px;
+color:#ddd;
+}
+
+.btn{
+display:block;
+padding:14px;
+border-radius:12px;
+margin-bottom:10px;
+text-align:center;
+font-weight:700;
+text-decoration:none;
+font-size:14px;
+}
+
+.google{
+background:white;
+color:black;
+}
+
+.alt{
+background:#111;
+color:white;
+border:1px solid rgba(255,255,255,.1);
+}
+
+/* INFO BOX */
+.info{
+margin-top:15px;
+padding:14px;
+border-radius:16px;
+background:rgba(255,255,255,.03);
+border:1px solid rgba(255,255,255,.08);
+font-size:12px;
+color:#ccc;
+line-height:1.5;
+}
+
+.info strong{
+color:white;
+}
+
+/* CARDS */
+section{
+padding:20px 16px;
+}
+
+.card{
+background:rgba(255,255,255,.03);
+border:1px solid rgba(255,255,255,.08);
+padding:14px;
+border-radius:14px;
+margin-bottom:10px;
+}
+
+.card h3{
+font-size:14px;
+margin-bottom:6px;
+}
+
+.card p{
+font-size:12px;
+color:#ccc;
+line-height:1.5;
+}
+
+footer{
+text-align:center;
+font-size:10px;
+color:#777;
+padding:30px 16px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- TOP LIVE BAR -->
+<div class="topbar">
+
+<div class="progress-wrap">
+<span><strong>7.24%</strong> verso controllo</span>
+<span><strong>€72.400.000</strong> / €1.000.000.000</span>
+</div>
+
+<div class="bar">
+<div class="fill"></div>
+</div>
+
+</div>
+
+<!-- HERO -->
+<div class="hero">
+
+<div class="badge">Progetto indipendente • non ufficiale</div>
+
+<div class="live">
+🔥 85.432 tifosi già verificati<br>
+📊 dati aggregati in tempo reale
+</div>
+
+<h1>
+IL MILAN AI TIFOSI.<br>
+<span>esperimento globale</span>
+</h1>
+
+<p class="sub">
+Una piattaforma indipendente che aggrega dichiarazioni di interesse verificate per valutare la fattibilità di un futuro modello di partecipazione collettiva.
+</p>
+
+<a href="#login" class="cta">
+PARTECIPA ORA
+</a>
+
+<div class="cta-sub">
+Minimo indicativo 500€ • Nessun pagamento in questa fase
+</div>
+
+<div class="info">
+<strong>Importante:</strong> nessuna transazione viene effettuata. Tutti i dati rappresentano dichiarazioni volontarie e non vincolanti.
+</div>
+
+<!-- LOGIN -->
+<div class="login" id="login">
+
+<h3>Verifica identità</h3>
+
+<a href="#" class="btn google">Continua con Google</a>
+<a href="#" class="btn alt">Email + Telefono</a>
+
+</div>
+
+</div>
+
+<!-- INFO SECTIONS -->
+<section>
+
+<div class="card">
+<h3>Cos’è questo progetto</h3>
+<p>
+Un esperimento indipendente per misurare il potenziale interesse globale dei tifosi del Milan verso un possibile modello di partecipazione futura.
+</p>
+</div>
+
+<div class="card">
+<h3>Come funziona</h3>
+<p>
+1. Login verificato<br>
+2. Dichiarazione importo indicativo<br>
+3. Aggregazione anonima dati<br>
+4. Visualizzazione pubblica in tempo reale
+</p>
+</div>
+
+<div class="card">
+<h3>Obiettivo</h3>
+<p>
+Valutare se esiste una base sufficiente di partecipazione per un eventuale modello di proprietà condivisa.
+</p>
+</div>
+
+</section>
+
+<footer>
+Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
+</footer>
+
+</body>
+</html>

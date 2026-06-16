@@ -1,2 +1,6 @@
 # milan
-il milan ai tifosi. esperimento globale per misurare il potenziale interesse dei tifosi del AC Milan verso un possibile modello di partecipazione futura
+Il Milan ai Tifosi — esperimento globale per misurare il potenziale interesse dei tifosi verso un possibile modello di partecipazione collettiva.
+
+Pagina principale: [index.html](index.html)
+
+Questo repository contiene una semplice pagina statica di anteprima per l'esperimento.
