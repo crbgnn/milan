@@ -64,6 +64,45 @@ function saveAuthState() {
   }));
 }
 
+async function recoverSession() {
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) {
+      console.error('Session recovery error:', error);
+      return null;
+    }
+
+    if (data && data.session && data.session.user) {
+      state.loggedIn = true;
+      state.user = data.session.user;
+      saveAuthState();
+      updateAuthDisplay(data.session.user);
+      return data.session.user;
+    }
+  } catch (err) {
+    console.error('Unexpected error during session recovery:', err);
+  }
+
+  return null;
+}
+
+function setupAuthListener() {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (session && session.user) {
+      state.loggedIn = true;
+      state.user = session.user;
+      saveAuthState();
+      updateAuthDisplay(session.user);
+      loadPledgeStats();
+    } else {
+      state.loggedIn = false;
+      state.user = null;
+      saveAuthState();
+      updateAuthDisplay(null);
+    }
+  });
+}
+
 async function loginWithGoogle() {
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
@@ -86,18 +125,23 @@ async function loginWithEmail(email) {
 }
 
 async function getUser() {
+  if (state.user) {
+    return state.user;
+  }
+
   const { data, error } = await supabaseClient.auth.getUser();
   if (error) {
-    console.error(error);
+    console.error('Error getting user:', error);
     return null;
   }
-  return data.user;
+  return data.user || null;
 }
 
 async function savePledge(amount) {
   const user = await getUser();
   if (!user) {
     alert('Devi fare login prima');
+    console.warn('Pledge attempted without authenticated user');
     return;
   }
 
@@ -109,10 +153,11 @@ async function savePledge(amount) {
   ]);
 
   if (error) {
-    console.error(error);
+    console.error('Error saving pledge:', error);
+    alert('Errore nel salvataggio della partecipazione');
   } else {
     alert('Partecipazione registrata');
-    loadPledgeStats();
+    await loadPledgeStats();
   }
 }
 
@@ -141,12 +186,19 @@ async function logout() {
 }
 
 async function loadPledgeStats() {
+  const user = await getUser();
+  
+  if (!user) {
+    console.warn('No user session. Skipping pledge stats load.');
+    return;
+  }
+
   const { data: pledges, error } = await supabaseClient
     .from('pledges')
     .select('amount, user_id');
 
   if (error) {
-    console.error(error);
+    console.error('Error loading pledge stats:', error);
     return;
   }
 
@@ -364,6 +416,8 @@ function setupEvents() {
 
 function init() {
   loadState();
+  recoverSession();
+  setupAuthListener();
   if (state.loggedIn) {
     createBadge();
     updateCtaText();
