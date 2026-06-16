@@ -37,6 +37,7 @@ const fanSelectors = {
 const state = {
   loggedIn: false,
   user: null,
+  userPledge: null,
   selectedAmount: null,
   stats: {
     users: 0,
@@ -44,6 +45,80 @@ const state = {
     total: 0,
   },
 };
+
+// Fetch existing pledge for a given user and store in state
+async function fetchUserPledge(userId) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabaseClient
+      .from('pledges')
+      .select('amount, user_id')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching user pledge:', error);
+      state.userPledge = null;
+      return null;
+    }
+
+    state.userPledge = data || null;
+    applyPledgeUI();
+    return state.userPledge;
+  } catch (err) {
+    console.error('Unexpected error fetching pledge:', err);
+    state.userPledge = null;
+    return null;
+  }
+}
+
+function applyPledgeUI() {
+  const pledge = state.userPledge;
+  // ensure participation container exists
+  if (!selectors.participation) return;
+
+  // remove any previous info
+  let info = document.getElementById('pledgeInfo');
+  if (info) info.remove();
+
+  if (pledge && pledge.amount) {
+    // Disable tier buttons
+    if (selectors.tierButtons) {
+      selectors.tierButtons.forEach((b) => {
+        b.disabled = true;
+        b.classList.remove('selected');
+      });
+    }
+
+    // Disable confirm button and change text
+    if (selectors.pledgeButton) {
+      selectors.pledgeButton.disabled = true;
+      selectors.pledgeButton.textContent = 'Partecipazione già registrata';
+    }
+
+    // Show message with amount
+    info = document.createElement('div');
+    info.id = 'pledgeInfo';
+    info.style.marginTop = '10px';
+    info.style.fontSize = '13px';
+    info.style.color = '#bdebb0';
+    info.textContent = `✅ Hai già registrato una partecipazione di ${formatCurrency(Number(pledge.amount))}`;
+    selectors.participation.appendChild(info);
+  } else {
+    // No pledge: keep current behavior
+    if (selectors.tierButtons) {
+      selectors.tierButtons.forEach((b) => {
+        b.disabled = false;
+      });
+    }
+    if (selectors.pledgeButton) {
+      selectors.pledgeButton.textContent = 'Conferma partecipazione';
+      // keep disabled unless a tier is selected
+      selectors.pledgeButton.disabled = !state.selectedAmount;
+    }
+  }
+}
 
 function loadState() {
   const stored = localStorage.getItem(STATE_KEY);
@@ -77,6 +152,8 @@ async function recoverSession() {
       state.user = data.session.user;
       saveAuthState();
       updateAuthDisplay(data.session.user);
+      // Load any existing pledge for this user
+      fetchUserPledge(data.session.user.id).catch((e) => console.error(e));
       return data.session.user;
     }
   } catch (err) {
@@ -94,11 +171,16 @@ function setupAuthListener() {
       saveAuthState();
       updateAuthDisplay(session.user);
       loadStats();
+      // Load any existing pledge for this user
+      fetchUserPledge(session.user.id).catch((e) => console.error(e));
     } else {
       state.loggedIn = false;
       state.user = null;
+      state.userPledge = null;
       saveAuthState();
       updateAuthDisplay(null);
+      applyPledgeUI();
+      loadStats();
     }
   });
 }
@@ -159,6 +241,20 @@ async function savePledge() {
       return;
     }
 
+    // Final check: ensure no existing pledge for this user before inserting
+    try {
+      const existing = await fetchUserPledge(user.id);
+      if (existing) {
+        alert('Hai già registrato una partecipazione.');
+        btn.textContent = originalText;
+        btn.disabled = false;
+        return;
+      }
+    } catch (err) {
+      console.error('Error during final pledge check:', err);
+      // proceed cautiously if check fails
+    }
+
     const { error } = await supabaseClient
       .from('pledges')
       .insert([
@@ -178,6 +274,9 @@ async function savePledge() {
 
     // Refresh full stats from Supabase
     await loadStats();
+
+    // After successful insert, refresh user pledge state and UI
+    await fetchUserPledge(user.id);
 
     // Reset selection and disable button
     selectors.tierButtons.forEach((b) => b.classList.remove('selected'));
@@ -242,8 +341,12 @@ async function loadPledgeStats() {
     .select('amount, user_id', { count: 'exact' });
 
   if (error) {
-    console.error('Error loading pledge stats:', error);
-    return null;
+    console.error('Error loading public pledge stats:', error);
+    return {
+      users: 0,
+      count: 0,
+      total: 0,
+    };
   }
 
   const rows = pledges || [];
@@ -259,12 +362,16 @@ async function loadPledgeStats() {
 }
 
 function renderStats(data) {
-  if (!data) return;
+  const statsData = data || {
+    users: state.stats.users,
+    count: state.stats.count,
+    total: state.stats.total,
+  };
 
   state.stats = {
-    users: data.users || 0,
-    count: data.count || 0,
-    total: data.total || 0,
+    users: statsData.users || 0,
+    count: statsData.count || 0,
+    total: statsData.total || 0,
   };
 
   if (selectors.topCapitalValue) {
@@ -427,6 +534,10 @@ async function completeLogin(userData) {
     <h3>Verifica identità</h3>
     <div class="info" style="margin-top:0;">Accesso completato come <strong>${userData.email || userData.provider}</strong>.</div>
   `;
+  // Fetch any existing pledge for this user
+  if (userData && userData.id) {
+    fetchUserPledge(userData.id).catch((e) => console.error(e));
+  }
 }
 
 function safeParse(value) {
@@ -463,13 +574,15 @@ function setupEvents() {
   });
 }
 
-function init() {
+async function init() {
   loadState();
-  recoverSession();
+  await recoverSession();
   setupAuthListener();
-  if (state.loggedIn) {
+  if (state.loggedIn && state.user) {
     createBadge();
     updateCtaText();
+    // ensure user pledge is loaded
+    fetchUserPledge(state.user.id).catch((e) => console.error(e));
   }
   setupEvents();
   loadStats();
