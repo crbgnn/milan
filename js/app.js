@@ -34,9 +34,9 @@ const state = {
   loggedIn: false,
   user: null,
   stats: {
-    verifiedUsers: 85432,
-    commitments: 12470,
-    euroValue: 72400000,
+    verifiedUsers: 88004,
+    commitments: 79208,
+    euroValue: 94109549,
   },
 };
 
