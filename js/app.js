@@ -1,3 +1,4 @@
+window.__APP_INIT__ = false;
 import { saveUser } from './api.js';
 
 const selectors = {
@@ -420,9 +421,6 @@ function renderStats(data) {
   }
 
   // Update top countries aggregation (non-blocking)
-  loadCountryTotals().catch((e) => {
-    console.error('Error loading country totals:', e);
-  });
 }
 
 function getCountryFromLocale() {
@@ -529,6 +527,10 @@ function loadScript(src) {
 }
 
 async function loadFanCapitalTrend() {
+  if (window.fanChart) {
+  window.fanChart.destroy();
+  window.fanChart = null;
+}
   // Insert the chart below the Milan Fan Capital Index card
   if (!fanSelectors.countryList) return;
 
@@ -581,7 +583,8 @@ async function loadFanCapitalTrend() {
   if (!cardWrapper) return;
 
   // Avoid adding duplicate chart
-  if (document.getElementById('fanTrendChartWrap')) return;
+  const old = document.getElementById('fanTrendChartWrap');
+if (old) old.remove();
 
   const wrap = document.createElement('div');
   wrap.id = 'fanTrendChartWrap';
@@ -610,7 +613,7 @@ async function loadFanCapitalTrend() {
   try {
     const ctx = canvas.getContext('2d');
     /* global Chart */
-    new Chart(ctx, {
+    window.fanChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels,
@@ -796,20 +799,32 @@ function setupEvents() {
 }
 
 async function init() {
+  if (window.__APP_INIT__) return;
+  window.__APP_INIT__ = true;
+
   loadState();
+
   await recoverSession();
+
   setupAuthListener();
+
   if (state.loggedIn && state.user) {
     createBadge();
     updateCtaText();
-    // ensure user pledge is loaded
+
     fetchUserPledge(state.user.id).catch((e) => console.error(e));
     upsertProfile(state.user).catch((e) => console.error(e));
   }
+
   setupEvents();
+
+  // ✅ LOAD DATI UNA SOLA VOLTA
   loadStats();
-  // Load fan capital trend chart (non-blocking)
+  loadCountryTotals().catch((e) => console.error('Country load error', e));
+
+  // chart separato
   loadFanCapitalTrend().catch((e) => console.error('Trend load error', e));
+
   setupRealtime();
 }
 
@@ -826,9 +841,15 @@ function setupRealtime() {
         table: 'pledges',
       },
       async () => {
-        const pledgeData = await loadPledgeStats();
-        renderStats(pledgeData);
-      }
+  const pledgeData = await loadPledgeStats();
+
+  if (!pledgeData) return;
+
+  // IMPORTANT: evita re-render duplicati aggressivi
+  requestAnimationFrame(() => {
+    renderStats(pledgeData);
+  });
+}
     )
     .subscribe();
 }
