@@ -5,6 +5,9 @@ const selectors = {
   statUsers: document.getElementById('stat-users'),
   statCommitments: document.getElementById('stat-commitments'),
   statEuro: document.getElementById('stat-euro'),
+  topProgressValue: document.getElementById('topProgressValue'),
+  topCapitalValue: document.getElementById('topCapitalValue'),
+  progressFill: document.getElementById('progressFill'),
   cta: document.querySelector('.cta'),
   loginContainer: document.querySelector('.login'),
   emailBtn: document.querySelector('.btn.alt'),
@@ -97,7 +100,7 @@ function setupAuthListener() {
       state.user = session.user;
       saveAuthState();
       updateAuthDisplay(session.user);
-      loadPledgeStats();
+      loadStats();
     } else {
       state.loggedIn = false;
       state.user = null;
@@ -142,24 +145,20 @@ async function getUser() {
 }
 
 async function savePledge(amount) {
-  // Validate amount
   const pledgeAmount = Number(amount);
   if (!pledgeAmount || pledgeAmount < 0) {
     alert('Inserisci un importo valido');
     return;
   }
 
-  // Get button reference
   const btn = selectors.pledgeButton;
   if (!btn) return;
 
-  // Show loading state
   const originalText = btn.textContent;
   btn.textContent = 'Elaborazione...';
   btn.disabled = true;
 
   try {
-    // Get authenticated user
     const user = await getUser();
     if (!user) {
       alert('Devi fare login prima di partecipare');
@@ -168,7 +167,6 @@ async function savePledge(amount) {
       return;
     }
 
-    // Insert pledge into database
     const { data, error } = await supabaseClient
       .from('pledges')
       .insert([
@@ -186,21 +184,18 @@ async function savePledge(amount) {
       return;
     }
 
-    // Success: clear input and update stats
     if (selectors.pledgeAmount) {
       selectors.pledgeAmount.value = '500';
     }
 
-    // Update counters
-    await loadPledgeStats();
+    const pledgeData = await loadPledgeStats();
+    renderStats(pledgeData);
 
-    // Show success message
     btn.textContent = '✓ Partecipazione registrata!';
     setTimeout(() => {
       btn.textContent = originalText;
       btn.disabled = false;
     }, 2000);
-
   } catch (err) {
     console.error('Unexpected error:', err);
     alert('Errore inatteso. Riprova.');
@@ -244,39 +239,72 @@ async function logout() {
 }
 
 async function loadPledgeStats() {
-  const user = await getUser();
-  
-  if (!user) {
-    console.warn('No user session. Skipping pledge stats load.');
-    return;
-  }
-
   const { data: pledges, error } = await supabaseClient
     .from('pledges')
     .select('amount, user_id');
 
   if (error) {
     console.error('Error loading pledge stats:', error);
-    return;
+    return null;
   }
 
-  if (!pledges) return;
+  if (!pledges) return { totalCapital: 0, totalUsers: 0 };
 
   const totalCapital = pledges.reduce((sum, p) => sum + Number(p.amount), 0);
-  const uniqueUsers = new Set(pledges.map(p => p.user_id)).size;
+  const totalUsers = new Set(pledges.map(p => p.user_id)).size;
+
+  return {
+    totalCapital,
+    totalUsers,
+  };
+}
+
+function renderStats(data) {
+  if (!data) return;
+
+  state.stats = {
+    verifiedUsers: data.totalUsers || 0,
+    commitments: data.totalCapital ? Math.max(1, Math.round(data.totalCapital / 500)) : 0,
+    euroValue: data.totalCapital || 0,
+  };
+
+  if (selectors.topCapitalValue) {
+    selectors.topCapitalValue.textContent = formatCurrency(state.stats.euroValue);
+  }
+
+  if (selectors.progressFill) {
+    const ratio = Math.min(state.stats.euroValue / 1000000000, 1);
+    selectors.progressFill.style.width = `${ratio * 100}%`;
+  }
+
+  updateHeroText();
+
+  if (selectors.statUsers) {
+    selectors.statUsers.textContent = formatNumber(state.stats.verifiedUsers);
+  }
+
+  if (selectors.statCommitments) {
+    selectors.statCommitments.textContent = formatNumber(getBoostedCommitments());
+  }
+
+  if (selectors.statEuro) {
+    selectors.statEuro.textContent = formatCurrency(state.stats.euroValue);
+  }
 
   if (fanSelectors.totalUsers) {
-    fanSelectors.totalUsers.innerText = formatNumber(uniqueUsers);
+    fanSelectors.totalUsers.textContent = formatNumber(state.stats.verifiedUsers);
   }
 
   if (fanSelectors.totalCapital) {
-    fanSelectors.totalCapital.innerText = formatCurrency(totalCapital);
+    fanSelectors.totalCapital.textContent = formatCurrency(state.stats.euroValue);
   }
 }
 
 async function loadStats() {
   calculateFanCapital();
-  await loadPledgeStats();
+
+  const pledgeData = await loadPledgeStats();
+  renderStats(pledgeData);
 
   getStats().then((stats) => {
     state.stats = stats;
@@ -347,14 +375,22 @@ function animateCount(element, from, to, duration = 900, prefix = '') {
 function updateHeroText() {
   const verified = formatNumber(state.stats.verifiedUsers);
   const commitments = formatNumber(getBoostedCommitments());
-  selectors.heroLive.innerHTML = `🔥 ${verified} tifosi già verificati<br>📊 ${commitments} dichiarazioni in tempo reale`;
+  if (selectors.heroLive) {
+    selectors.heroLive.innerHTML = `🔥 ${verified} tifosi già verificati<br>📊 ${commitments} dichiarazioni in tempo reale`;
+  }
 }
 
 function animateStats() {
   updateHeroText();
-  animateCount(selectors.statUsers, 0, state.stats.verifiedUsers);
-  animateCount(selectors.statCommitments, 0, getBoostedCommitments());
-  animateCount(selectors.statEuro, 0, state.stats.euroValue, 1000, '€');
+  if (selectors.statUsers) {
+    animateCount(selectors.statUsers, 0, state.stats.verifiedUsers);
+  }
+  if (selectors.statCommitments) {
+    animateCount(selectors.statCommitments, 0, getBoostedCommitments());
+  }
+  if (selectors.statEuro) {
+    animateCount(selectors.statEuro, 0, state.stats.euroValue, 1000, '€');
+  }
 }
 
 function scheduleStatUpdates() {
@@ -364,25 +400,17 @@ function scheduleStatUpdates() {
     });
 
     calculateFanCapital();
-    await loadPledgeStats();
-
-    const increments = {
-      verifiedUsers: Math.floor(Math.random() * 15) + 5,
-      commitments: Math.floor(Math.random() * 6) + 1,
-      euroValue: Math.floor(Math.random() * 150000) + 25000,
-    };
+    const pledgeData = await loadPledgeStats();
+    renderStats(pledgeData);
 
     const nextStats = {
-      verifiedUsers: state.stats.verifiedUsers + increments.verifiedUsers,
-      commitments: state.stats.commitments + increments.commitments,
-      euroValue: state.stats.euroValue + increments.euroValue,
+      verifiedUsers: state.stats.verifiedUsers + Math.floor(Math.random() * 15) + 5,
+      commitments: state.stats.commitments + Math.floor(Math.random() * 6) + 1,
+      euroValue: state.stats.euroValue + Math.floor(Math.random() * 150000) + 25000,
     };
 
-    const currentDisplayedCommitments = parseInt(selectors.statCommitments.textContent.replace(/\D/g, ''), 10) || state.stats.commitments;
-    const nextDisplayedCommitments = nextStats.commitments + commitmentBoost;
-
     animateCount(selectors.statUsers, state.stats.verifiedUsers, nextStats.verifiedUsers);
-    animateCount(selectors.statCommitments, currentDisplayedCommitments, nextDisplayedCommitments);
+    animateCount(selectors.statCommitments, getBoostedCommitments(), nextStats.commitments + commitmentBoost);
     animateCount(selectors.statEuro, state.stats.euroValue, nextStats.euroValue, 1200, '€');
 
     state.stats = nextStats;
@@ -497,8 +525,9 @@ function setupRealtime() {
         schema: 'public',
         table: 'pledges',
       },
-      () => {
-        loadPledgeStats();
+      async () => {
+        const pledgeData = await loadPledgeStats();
+        renderStats(pledgeData);
       }
     )
     .subscribe();
