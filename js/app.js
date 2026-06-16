@@ -14,6 +14,22 @@ const selectors = {
 const STATE_KEY = 'milan_auth';
 const OTP_KEY = 'milan_otp';
 
+const fanData = [
+  { country: 'Italia', users: 25000, avg: 650 },
+  { country: 'Brasile', users: 18000, avg: 780 },
+  { country: 'USA', users: 12000, avg: 900 },
+  { country: 'UK', users: 8000, avg: 750 },
+  { country: 'Francia', users: 6000, avg: 700 },
+];
+
+let commitmentBoost = 0;
+
+const fanSelectors = {
+  totalUsers: document.getElementById('totalUsers'),
+  totalCapital: document.getElementById('totalCapital'),
+  countryList: document.getElementById('countryList'),
+};
+
 const state = {
   loggedIn: false,
   user: null,
@@ -44,6 +60,7 @@ function saveAuthState() {
 }
 
 function loadStats() {
+  calculateFanCapital();
   getStats().then((stats) => {
     state.stats = stats;
     animateStats();
@@ -53,6 +70,45 @@ function loadStats() {
 
 function formatNumber(value) {
   return value.toLocaleString('it-IT');
+}
+
+function formatCurrency(value) {
+  return '€' + value.toLocaleString('it-IT');
+}
+
+function calculateFanCapital() {
+  if (!fanSelectors.totalUsers || !fanSelectors.totalCapital || !fanSelectors.countryList) return;
+
+  let totalUsers = 0;
+  let totalCapital = 0;
+  fanSelectors.countryList.innerHTML = '';
+
+  fanData.forEach(c => {
+    const countryTotal = c.users * c.avg;
+
+    totalUsers += c.users;
+    totalCapital += countryTotal;
+
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = 'space-between';
+    row.style.flexWrap = 'wrap';
+    row.style.gap = '8px';
+    row.innerHTML = `
+      <span>${c.country}</span>
+      <span style="color:#fff;">${formatCurrency(countryTotal)}</span>
+    `;
+
+    fanSelectors.countryList.appendChild(row);
+  });
+
+  fanSelectors.totalUsers.textContent = formatNumber(totalUsers);
+  fanSelectors.totalCapital.textContent = formatCurrency(totalCapital);
+  commitmentBoost = Math.max(3, Math.round(totalUsers / 800));
+}
+
+function getBoostedCommitments() {
+  return state.stats.commitments + commitmentBoost;
 }
 
 function animateCount(element, from, to, duration = 900, prefix = '') {
@@ -73,19 +129,25 @@ function animateCount(element, from, to, duration = 900, prefix = '') {
 
 function updateHeroText() {
   const verified = formatNumber(state.stats.verifiedUsers);
-  const commitments = formatNumber(state.stats.commitments);
+  const commitments = formatNumber(getBoostedCommitments());
   selectors.heroLive.innerHTML = `🔥 ${verified} tifosi già verificati<br>📊 ${commitments} dichiarazioni in tempo reale`;
 }
 
 function animateStats() {
   updateHeroText();
   animateCount(selectors.statUsers, 0, state.stats.verifiedUsers);
-  animateCount(selectors.statCommitments, 0, state.stats.commitments);
+  animateCount(selectors.statCommitments, 0, getBoostedCommitments());
   animateCount(selectors.statEuro, 0, state.stats.euroValue, 1000, '€');
 }
 
 function scheduleStatUpdates() {
   setInterval(() => {
+    fanData.forEach(c => {
+      c.users += Math.floor(Math.random() * 5);
+    });
+
+    calculateFanCapital();
+
     const increments = {
       verifiedUsers: Math.floor(Math.random() * 15) + 5,
       commitments: Math.floor(Math.random() * 6) + 1,
@@ -98,8 +160,11 @@ function scheduleStatUpdates() {
       euroValue: state.stats.euroValue + increments.euroValue,
     };
 
+    const currentDisplayedCommitments = parseInt(selectors.statCommitments.textContent.replace(/\D/g, ''), 10) || state.stats.commitments;
+    const nextDisplayedCommitments = nextStats.commitments + commitmentBoost;
+
     animateCount(selectors.statUsers, state.stats.verifiedUsers, nextStats.verifiedUsers);
-    animateCount(selectors.statCommitments, state.stats.commitments, nextStats.commitments);
+    animateCount(selectors.statCommitments, currentDisplayedCommitments, nextDisplayedCommitments);
     animateCount(selectors.statEuro, state.stats.euroValue, nextStats.euroValue, 1200, '€');
 
     state.stats = nextStats;
