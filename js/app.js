@@ -10,6 +10,9 @@ const selectors = {
   emailBtn: document.querySelector('.btn.alt'),
   authStatus: document.getElementById('authStatus'),
   logoutButton: document.getElementById('logoutButton'),
+  participation: document.querySelector('.participation'),
+  pledgeAmount: document.getElementById('pledgeAmount'),
+  pledgeButton: document.getElementById('pledgeButton'),
 };
 
 const STATE_KEY = 'milan_auth';
@@ -139,26 +142,70 @@ async function getUser() {
 }
 
 async function savePledge(amount) {
-  const user = await getUser();
-  if (!user) {
-    alert('Devi fare login prima');
-    console.warn('Pledge attempted without authenticated user');
+  // Validate amount
+  const pledgeAmount = Number(amount);
+  if (!pledgeAmount || pledgeAmount < 0) {
+    alert('Inserisci un importo valido');
     return;
   }
 
-  const { error } = await supabaseClient.from('pledges').insert([
-    {
-      user_id: user.id,
-      amount: Number(amount),
-    },
-  ]);
+  // Get button reference
+  const btn = selectors.pledgeButton;
+  if (!btn) return;
 
-  if (error) {
-    console.error('Error saving pledge:', error);
-    alert('Errore nel salvataggio della partecipazione');
-  } else {
-    alert('Partecipazione registrata');
+  // Show loading state
+  const originalText = btn.textContent;
+  btn.textContent = 'Elaborazione...';
+  btn.disabled = true;
+
+  try {
+    // Get authenticated user
+    const user = await getUser();
+    if (!user) {
+      alert('Devi fare login prima di partecipare');
+      btn.textContent = originalText;
+      btn.disabled = false;
+      return;
+    }
+
+    // Insert pledge into database
+    const { data, error } = await supabaseClient
+      .from('pledges')
+      .insert([
+        {
+          user_id: user.id,
+          amount: pledgeAmount,
+        },
+      ]);
+
+    if (error) {
+      console.error('Errore nel salvataggio:', error);
+      alert('Errore nel salvataggio della partecipazione. Riprova.');
+      btn.textContent = originalText;
+      btn.disabled = false;
+      return;
+    }
+
+    // Success: clear input and update stats
+    if (selectors.pledgeAmount) {
+      selectors.pledgeAmount.value = '500';
+    }
+
+    // Update counters
     await loadPledgeStats();
+
+    // Show success message
+    btn.textContent = '✓ Partecipazione registrata!';
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    alert('Errore inatteso. Riprova.');
+    btn.textContent = originalText;
+    btn.disabled = false;
   }
 }
 
@@ -169,10 +216,20 @@ function updateAuthDisplay(user) {
     selectors.authStatus.style.display = 'block';
     selectors.authStatus.innerHTML = `Logged in as <strong>${user.email}</strong>`;
     selectors.logoutButton.style.display = 'block';
+    
+    // Show participation section when logged in
+    if (selectors.participation) {
+      selectors.participation.style.display = 'block';
+    }
   } else {
     selectors.authStatus.style.display = 'none';
     selectors.authStatus.innerHTML = '';
     selectors.logoutButton.style.display = 'none';
+    
+    // Hide participation section when logged out
+    if (selectors.participation) {
+      selectors.participation.style.display = 'none';
+    }
   }
 }
 
