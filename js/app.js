@@ -330,24 +330,28 @@ function updateAuthDisplay(user) {
 }
 
 async function logout() {
-  const { error } = await supabaseClient.auth.signOut();
+  try {
+    await supabaseClient.auth.signOut();
 
-  console.log("logout:", error);
+    state.loggedIn = false;
+    state.user = null;
 
-  state.loggedIn = false;
-  state.user = null;
+    updateCtaText();
 
-  updateCtaText();
+    selectors.loginContainer.innerHTML = `
+      <h3>Verifica identità</h3>
+      <a href="#" onclick="event.preventDefault(); loginWithGoogle()">Google</a>
+      <a href="#" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
+    `;
 
-  selectors.loginContainer.innerHTML = `
-    <h3>Verifica identità</h3>
-    <a href="#" class="btn google" onclick="event.preventDefault(); loginWithGoogle()">Continua con Google</a>
-    <a href="#" class="btn alt" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
-  `;
+    document.getElementById('verifiedBadge')?.remove();
 
-  // opzionale: reset UI extra
-  document.getElementById('verifiedBadge')?.remove();
+    console.log("LOGOUT OK");
+  } catch (e) {
+    console.error("logout error", e);
+  }
 }
+window.logout = logout;
 
 async function loadPledgeStats() {
   const { data: pledges, error, count } = await supabaseClient
@@ -936,5 +940,7 @@ window.savePledge = savePledge;
 window.getUser = getUser;
 window.loadStats = loadStats;
 window.renderStats = renderStats;
+window.openOtpForm = openOtpForm;
+window.logout = logout;
 
 init();
