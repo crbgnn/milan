@@ -364,6 +364,26 @@ async function loadPledgeStats() {
     total,
   };
 }
+function setupEvents() {
+  if (!selectors.tierButtons) return;
+
+  selectors.tierButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      selectors.tierButtons.forEach((btn) =>
+        btn.classList.remove('selected')
+      );
+
+      button.classList.add('selected');
+
+      state.selectedAmount = Number(button.dataset.amount);
+
+      if (selectors.pledgeButton)
+        selectors.pledgeButton.disabled = false;
+    });
+  });
+}
 
 function renderStats(data) {
   const statsData = data || {
