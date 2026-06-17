@@ -832,7 +832,6 @@ async function completeLogin(userData) {
       if (selectors.pledgeButton) selectors.pledgeButton.disabled = false;
     });
   });
-}
 
 async function init() {
   if (window.__APP_INIT__) return;
