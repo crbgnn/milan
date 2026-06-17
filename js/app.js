@@ -762,6 +762,12 @@ function scheduleStatUpdates() {
 
 function createBadge() {
   if (document.querySelector('.verified-badge')) return;
+
+  if (!selectors.heroLive) {
+    console.warn('heroLive non trovato');
+    return;
+  }
+
   const badge = document.createElement('span');
   badge.className = 'verified-badge';
   badge.textContent = 'Verificato';
@@ -774,6 +780,7 @@ function createBadge() {
   badge.style.background = 'rgba(255,255,255,.08)';
   badge.style.color = '#fff';
   badge.style.marginTop = '10px';
+
   selectors.heroLive.insertAdjacentElement('afterend', badge);
 }
 
@@ -785,6 +792,7 @@ function openOtpForm() {
   const form = document.createElement('form');
   form.className = 'otp-form';
   form.style.marginTop = '14px';
+
   form.innerHTML = `
     <label style="display:block;font-size:12px;color:#ccc;margin-bottom:8px;">Email</label>
     <input type="email" name="email" placeholder="you@example.com" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;margin-bottom:10px;" />
@@ -793,56 +801,49 @@ function openOtpForm() {
 
   const existing = selectors.loginContainer.querySelector('.otp-form');
   if (existing) return;
+
   selectors.loginContainer.appendChild(form);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+
     const email = form.querySelector('input[name="email"]').value.trim();
+
     if (!email) return;
+
     await loginWithEmail(email);
-    form.outerHTML = `<p style="font-size:12px;color:#ccc;margin-top:10px;">OTP inviato a ${email}. Controlla la tua email per completare l'accesso.</p>`;
+
+    form.outerHTML = `
+      <p style="font-size:12px;color:#ccc;margin-top:10px;">
+        OTP inviato a ${email}. Controlla la tua email per completare l'accesso.
+      </p>
+    `;
   });
 }
 
 async function completeLogin(userData) {
   state.loggedIn = true;
   state.user = userData;
+
   saveAuthState();
+
   await saveUser(userData);
+
   createBadge();
   updateCtaText();
+
   selectors.loginContainer.innerHTML = `
     <h3>Verifica identità</h3>
-    <div class="info" style="margin-top:0;">Accesso completato come <strong>${userData.email || userData.provider}</strong>.</div>
+    <div class="info" style="margin-top:0;">
+      Accesso completato come <strong>${userData.email || userData.provider}</strong>.
+    </div>
   `;
-  // Fetch any existing pledge for this user
+
   if (userData && userData.id) {
     fetchUserPledge(userData.id).catch((e) => console.error(e));
     upsertProfile(userData).catch((e) => console.error(e));
   }
 }
-
-function safeParse(value) {
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    return null;
-  }
-}
-
-function setupEvents() {
-  if (selectors.emailBtn) {
-    selectors.emailBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      openOtpForm();
-    });
-  }
-
-  if (selectors.logoutButton) {
-    selectors.logoutButton.addEventListener('click', async (event) => {
-      event.preventDefault();
-      await logout();
-    });
   }
 
   selectors.tierButtons.forEach((button) => {
