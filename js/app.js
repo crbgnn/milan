@@ -331,12 +331,22 @@ function updateAuthDisplay(user) {
 
 async function logout() {
   const { error } = await supabaseClient.auth.signOut();
-  if (error) console.error(error);
+
+  console.log("logout:", error);
+
   state.loggedIn = false;
   state.user = null;
-  saveAuthState();
-  updateAuthDisplay(null);
+
   updateCtaText();
+
+  selectors.loginContainer.innerHTML = `
+    <h3>Verifica identità</h3>
+    <a href="#" class="btn google" onclick="event.preventDefault(); loginWithGoogle()">Continua con Google</a>
+    <a href="#" class="btn alt" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
+  `;
+
+  // opzionale: reset UI extra
+  document.getElementById('verifiedBadge')?.remove();
 }
 
 async function loadPledgeStats() {
