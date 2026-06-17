@@ -50,28 +50,26 @@ const state = {
 // Fetch existing pledge for a given user and store in state
 async function fetchUserPledge(userId) {
   if (!userId) return null;
-  try {
-    const { data, error } = await supabaseClient
-      .from('pledges')
-      .select('amount, user_id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching user pledge:', error);
-      state.userPledge = null;
-      return null;
-    }
+  const { data, error } = await supabaseClient
+    .from('pledges')
+    .select('amount, user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    state.userPledge = data || null;
-    applyPledgeUI();
-    return state.userPledge;
-  } catch (err) {
-    console.error('Unexpected error fetching pledge:', err);
+  if (error) {
+    console.error('fetchUserPledge error:', error);
     state.userPledge = null;
-    return null;
+    return { exists: false, error: true };
   }
+
+  state.userPledge = data || null;
+  applyPledgeUI();
+
+  return {
+    exists: !!data,
+    data
+  };
 }
 
 function applyPledgeUI() {
@@ -230,6 +228,7 @@ async function savePledge() {
     alert('Seleziona una fascia prima di confermare');
     return;
   }
+
   const btn = selectors.pledgeButton;
   if (!btn) return;
 
@@ -246,67 +245,55 @@ async function savePledge() {
       return;
     }
 
-    // Final check: ensure no existing pledge for this user before inserting
-    try {
-      const existing = await fetchUserPledge(user.id);
-      if (existing) {
-        alert('Hai già registrato una partecipazione.');
-        btn.textContent = originalText;
-        btn.disabled = false;
-        return;
-      }
-    } catch (err) {
-      console.error('Error during final pledge check:', err);
-      // proceed cautiously if check fails
+    // 🔥 CHECK ESISTENTE (SAFE)
+    const existing = await fetchUserPledge(user.id);
+    if (existing.exists) {
+      alert('Hai già registrato una partecipazione.');
+      btn.textContent = originalText;
+      btn.disabled = true;
+      return;
     }
 
+    // 🔥 UPSERT (ANTI RACE CONDITION)
     const { error } = await supabaseClient
       .from('pledges')
-      .insert([
+      .upsert(
         {
           user_id: user.id,
-          amount,
+          amount
         },
-      ]);
+        { onConflict: 'user_id' }
+      );
 
     if (error) {
-      console.error('Errore nel salvataggio:', error);
-      alert('Errore nel salvataggio della partecipazione. Riprova.');
+      console.error(error);
+      alert('Errore nel salvataggio');
       btn.textContent = originalText;
       btn.disabled = false;
       return;
     }
 
-    // Refresh full stats from Supabase
     await loadStats();
-
-    // After successful insert, refresh user pledge state and UI
     await fetchUserPledge(user.id);
 
-    // Reset selection and disable button
-    selectors.tierButtons.forEach((b) => b.classList.remove('selected'));
+    selectors.tierButtons.forEach(b => b.classList.remove('selected'));
     state.selectedAmount = null;
-    if (selectors.pledgeButton) selectors.pledgeButton.disabled = true;
 
-    // Toast inline
+    btn.textContent = 'Partecipazione registrata';
+    btn.disabled = true;
+
     const toast = document.createElement('div');
     toast.textContent = '✅ Dichiarazione registrata';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:20px;background:#C41C23;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);';
+    toast.style.cssText =
+      'position:fixed;bottom:24px;right:20px;background:#C41C23;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 
-    // Share su Twitter
     openShare(amount, state.stats);
 
-    btn.textContent = originalText;
-    btn.disabled = false;
   } catch (err) {
-    console.error('Unexpected error:', err);
-    const toastErr = document.createElement('div');
-    toastErr.textContent = '❌ Errore inatteso. Riprova.';
-    toastErr.style.cssText = 'position:fixed;bottom:24px;right:20px;background:#333;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);';
-    document.body.appendChild(toastErr);
-    setTimeout(() => toastErr.remove(), 3000);
+    console.error(err);
+    alert('Errore inatteso');
     btn.textContent = originalText;
     btn.disabled = false;
   }
@@ -761,25 +748,14 @@ function scheduleStatUpdates() {
 }
 
 function createBadge() {
-  if (document.querySelector('.verified-badge')) return;
+  if (document.getElementById('verifiedBadge')) return;
 
-  if (!selectors.heroLive) {
-    console.warn('heroLive non trovato');
-    return;
-  }
+  if (!selectors.heroLive) return;
 
   const badge = document.createElement('span');
+  badge.id = 'verifiedBadge';
   badge.className = 'verified-badge';
   badge.textContent = 'Verificato';
-  badge.style.display = 'inline-flex';
-  badge.style.alignItems = 'center';
-  badge.style.justifyContent = 'center';
-  badge.style.padding = '6px 10px';
-  badge.style.fontSize = '11px';
-  badge.style.borderRadius = '999px';
-  badge.style.background = 'rgba(255,255,255,.08)';
-  badge.style.color = '#fff';
-  badge.style.marginTop = '10px';
 
   selectors.heroLive.insertAdjacentElement('afterend', badge);
 }
@@ -789,35 +765,37 @@ function updateCtaText() {
 }
 
 function openOtpForm() {
+  if (document.querySelector('.otp-form')) return;
+
   const form = document.createElement('form');
   form.className = 'otp-form';
   form.style.marginTop = '14px';
 
   form.innerHTML = `
     <label style="display:block;font-size:12px;color:#ccc;margin-bottom:8px;">Email</label>
-    <input type="email" name="email" placeholder="you@example.com" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;margin-bottom:10px;" />
-    <button type="submit" class="btn google" style="width:100%;">Richiedi OTP</button>
+    <input type="email" name="email" required
+      style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;margin-bottom:10px;" />
+    <button type="submit">Richiedi OTP</button>
   `;
-
-  const existing = selectors.loginContainer.querySelector('.otp-form');
-  if (existing) return;
 
   selectors.loginContainer.appendChild(form);
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    const email = form.querySelector('input[name="email"]').value.trim();
-
+    const email = form.querySelector('input').value.trim();
     if (!email) return;
+
+    const btn = form.querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'Invio...';
 
     await loginWithEmail(email);
 
-    form.outerHTML = `
-      <p style="font-size:12px;color:#ccc;margin-top:10px;">
-        OTP inviato a ${email}. Controlla la tua email per completare l'accesso.
-      </p>
-    `;
+    form.outerHTML =
+      `<p style="font-size:12px;color:#ccc;margin-top:10px;">
+        OTP inviato a ${email}
+      </p>`;
   });
 }
 
