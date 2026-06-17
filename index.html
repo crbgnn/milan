@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Il Milan ai Tifosi</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
 
 <style>
 
@@ -65,18 +65,105 @@ width:100%;
 background:#222;
 border-radius:999px;
 overflow:hidden;
+position:relative;
 }
 
 .fill{
 height:100%;
-width:7.24%;
+width:0%;
 background:linear-gradient(90deg,#ff0000,#ff6a6a);
+transition: width 1s ease;
+}
+
+/* MILESTONE STAR */
+.milestone-star {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 20%; /* 200k / 1B = 0.02% but let's place it visually at 20% for now, JS will set it */
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 10;
+  filter: drop-shadow(0 0 4px gold);
+  transition: filter .2s;
+  line-height: 1;
+  margin-top: 0;
+}
+
+.milestone-star:hover {
+  filter: drop-shadow(0 0 10px gold) drop-shadow(0 0 20px rgba(255,215,0,0.6));
+}
+
+.milestone-tooltip {
+  display: none;
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.92);
+  border: 1px solid rgba(255,215,0,.4);
+  color: #ffd700;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.milestone-star:hover .milestone-tooltip {
+  display: block;
 }
 
 /* HERO */
 .hero{
 padding:90px 16px 25px;
 text-align:center;
+}
+
+/* FRASE CALLIGRAFICA */
+.hero-quote {
+  margin: 0 auto 18px;
+  max-width: 420px;
+  padding: 16px 10px 10px;
+}
+
+.hero-quote-line1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 19px;
+  line-height: 1.45;
+  color: #ff3333;
+  text-shadow:
+    0 0 8px rgba(255,40,40,0.9),
+    0 0 20px rgba(255,0,0,0.6),
+    0 0 45px rgba(200,0,0,0.4),
+    0 0 80px rgba(180,0,0,0.2);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.hero-quote-line2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e8a0a0;
+  text-shadow:
+    0 0 6px rgba(220,120,120,0.7),
+    0 0 18px rgba(200,80,80,0.4),
+    0 0 35px rgba(180,40,40,0.25);
+  display: block;
+}
+
+.hero-quote-divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,60,60,0.5), transparent);
+  margin: 14px auto 0;
 }
 
 .badge{
@@ -133,6 +220,8 @@ text-decoration:none;
 text-align:center;
 box-shadow:0 0 25px rgba(255,0,0,.4);
 animation:pulse 2s infinite;
+cursor:pointer;
+border:none;
 }
 
 .cta-sub{
@@ -173,6 +262,8 @@ text-align:center;
 font-weight:700;
 text-decoration:none;
 font-size:14px;
+cursor:pointer;
+border:none;
 }
 
 .google{
@@ -224,6 +315,16 @@ margin-bottom:6px;
 font-size:12px;
 color:#ccc;
 line-height:1.5;
+}
+
+.card.chi-siamo {
+  border-color: rgba(255,60,60,0.2);
+  background: rgba(255,30,30,0.04);
+}
+
+.card.chi-siamo h3 {
+  color: #ff7070;
+  text-shadow: 0 0 10px rgba(255,80,80,0.4);
 }
 
 .hero-stats{
@@ -334,7 +435,11 @@ padding:30px 16px;
 </div>
 
 <div class="bar">
-<div id="progressFill" class="fill"></div>
+  <div id="progressFill" class="fill"></div>
+  <div class="milestone-star" id="milestoneStar" style="left:20%;">
+    ⭐
+    <div class="milestone-tooltip">soglia psicologica</div>
+  </div>
 </div>
 
 </div>
@@ -342,11 +447,11 @@ padding:30px 16px;
 <!-- HERO -->
 <div class="hero">
 
-<div class="badge">Progetto indipendente • non ufficiale</div>
-
-<div class="live">
-  <div class="live-line">🔥 <strong><span id="liveUsers">0</span></strong> tifosi già verificati</div>
-  <div class="live-line">📊 <strong><span id="liveCommitments">0</span></strong> dichiarazioni in tempo reale</div>
+<!-- FRASE CALLIGRAFICA -->
+<div class="hero-quote">
+  <span class="hero-quote-line1">"Il Milan è dei fondi. Per ora.</span>
+  <span class="hero-quote-line2">Noi stiamo contando chi vorrebbe che tornasse ai tifosi."</span>
+  <div class="hero-quote-divider"></div>
 </div>
 
 <div class="hero-stats">
@@ -413,10 +518,10 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 <!-- INFO SECTIONS -->
 <section>
 
-<div class="card">
-<h3>Cos’è questo progetto</h3>
+<div class="card chi-siamo">
+<h3>Chi siamo</h3>
 <p>
-Un esperimento indipendente per misurare il potenziale interesse globale dei tifosi del Milan verso un possibile modello di partecipazione futura.
+Un gruppo di milanisti senza lucro e senza affiliazioni. Solo passione, con l'obiettivo di contare quanti ci sono per una partecipazione collettiva.
 </p>
 </div>
 
@@ -433,7 +538,7 @@ Un esperimento indipendente per misurare il potenziale interesse globale dei tif
 <div class="card">
 <h3>Obiettivo</h3>
 <p>
-Valutare se esiste una base sufficiente di partecipazione per un eventuale modello di proprietà condivisa.
+Valutare se esiste una base sufficiente di partecipazione per un eventuale modello di proprietà condivisa. Al raggiungimento di <strong style="color:white;">100.000 milanisti verificati</strong>, valuteremo insieme i passi successivi.
 </p>
 </div>
 
@@ -483,6 +588,18 @@ Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// Posiziona la stellina milestone a 200k/1B = 0.02% della barra
+// Ma la rendiamo visibile a minimo 18% per non sparire a sinistra
+(function() {
+  const TARGET = 1000000000;
+  const MILESTONE = 200000;
+  const pct = Math.max((MILESTONE / TARGET) * 100, 18);
+  const star = document.getElementById('milestoneStar');
+  if (star) star.style.left = pct + '%';
+})();
+</script>
 
 <script type="module" src="js/app.js"></script>
 </body>
