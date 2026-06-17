@@ -3,7 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Il Milan ai Tifosi</title>
+<title>Il Milan ai Tifosi — Esperimento Globale</title>
+
+<!-- SEO -->
+<meta name="description" content="Quanti milanisti ci sarebbero se il Milan potesse tornare nelle mani di chi lo ama? Registra la tua dichiarazione. Nessun pagamento, nessun vincolo.">
+<meta name="robots" content="index, follow">
+<meta name="keywords" content="AC Milan, tifosi, partecipazione, proprietà club, milanisti, fan ownership, Milan ai tifosi">
+<meta name="author" content="Milan ai Tifosi">
+<link rel="canonical" href="https://milanaitifosi.it">
+
+<!-- Open Graph — WhatsApp, Facebook, Telegram, LinkedIn -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://milanaitifosi.it">
+<meta property="og:title" content="Il Milan ai Tifosi — Esperimento Globale">
+<meta property="og:description" content="Il Milan è dei fondi. Per ora. Noi stiamo contando chi vorrebbe che tornasse ai tifosi. Dichiarazione libera, nessun pagamento.">
+<meta property="og:image" content="https://crbgnn.github.io/milan/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="it_IT">
+<meta property="og:site_name" content="Milan ai Tifosi">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://milanaitifosi.it">
+<meta name="twitter:title" content="Il Milan ai Tifosi — Esperimento Globale">
+<meta name="twitter:description" content="Il Milan è dei fondi. Per ora. Noi stiamo contando chi vorrebbe che tornasse ai tifosi.">
+<meta name="twitter:image" content="https://crbgnn.github.io/milan/og.png">
+
+<!-- Theme color barra browser mobile -->
+<meta name="theme-color" content="#0a0000">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
 
@@ -80,14 +109,12 @@ transition: width 1s ease;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  left: 20%; /* 200k / 1B = 0.02% but let's place it visually at 20% for now, JS will set it */
   font-size: 13px;
   cursor: pointer;
   z-index: 10;
   filter: drop-shadow(0 0 4px gold);
   transition: filter .2s;
   line-height: 1;
-  margin-top: 0;
 }
 
 .milestone-star:hover {
@@ -166,23 +193,6 @@ text-align:center;
   margin: 14px auto 0;
 }
 
-.badge{
-display:inline-block;
-padding:6px 10px;
-font-size:11px;
-border:1px solid rgba(255,255,255,.12);
-border-radius:999px;
-background:rgba(255,255,255,.04);
-margin-bottom:10px;
-}
-
-.live{
-font-size:12px;
-color:#ff5a5a;
-margin-bottom:10px;
-line-height:1.4;
-}
-
 h1{
 font-size:34px;
 font-weight:900;
@@ -231,7 +241,6 @@ margin-top:8px;
 text-align:center;
 }
 
-/* PULSE */
 @keyframes pulse{
 0%{box-shadow:0 0 15px rgba(255,0,0,.3);}
 50%{box-shadow:0 0 40px rgba(255,0,0,.8);}
@@ -277,7 +286,6 @@ color:white;
 border:1px solid rgba(255,255,255,.1);
 }
 
-/* INFO BOX */
 .info{
 margin-top:15px;
 padding:14px;
@@ -360,11 +368,6 @@ line-height:1.5;
   letter-spacing:.08em;
 }
 
-.live-line{
-  line-height:1.5;
-  margin-bottom:4px;
-}
-
 .verified-badge{
   display:inline-flex;
   align-items:center;
@@ -407,12 +410,13 @@ line-height:1.5;
   margin-bottom:10px;
 }
 
-/* Pledge tier selection styles */
 .tier-button{ position:relative; border:1px solid rgba(255,255,255,.08); }
 .tier-button.selected{ border:2px solid #C41C23; background:rgba(196,28,35,0.06); }
 .tier-button.selected::after{ content:"✓ Selezionato"; position:absolute; right:8px; top:8px; font-size:12px; color:#C41C23; }
 
 .btn[disabled]{ opacity:0.5; cursor:not-allowed; }
+
+.live-line{ line-height:1.5; margin-bottom:4px; }
 
 footer{
 text-align:center;
@@ -428,20 +432,17 @@ padding:30px 16px;
 
 <!-- TOP LIVE BAR -->
 <div class="topbar">
-
 <div class="progress-wrap">
-<span><strong id="topProgressValue">0%</strong> verso controllo</span>
-<span><strong id="topCapitalValue">€0</strong> / €1.000.000.000</span>
+  <span><strong id="topProgressValue">0%</strong> verso controllo</span>
+  <span><strong id="topCapitalValue">€0</strong> / €1.000.000.000</span>
 </div>
-
 <div class="bar">
   <div id="progressFill" class="fill"></div>
-  <div class="milestone-star" id="milestoneStar" style="left:20%;">
+  <div class="milestone-star" id="milestoneStar">
     ⭐
-    <div class="milestone-tooltip">soglia psicologica</div>
+    <div class="milestone-tooltip">200.000 tifosi — soglia psicologica</div>
   </div>
 </div>
-
 </div>
 
 <!-- HERO -->
@@ -502,15 +503,11 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 
 <!-- LOGIN -->
 <div class="login" id="login">
-
 <h3>Verifica identità</h3>
-
 <a href="#" class="btn google" onclick="event.preventDefault(); loginWithGoogle()">Continua con Google</a>
 <a href="#" class="btn alt" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
-
 <div id="authStatus" class="info" style="display:none; margin-top:12px;"></div>
 <button id="logoutButton" class="btn alt" style="display:none; width:100%; margin-top:10px;">Logout</button>
-
 </div>
 
 </div>
@@ -520,9 +517,7 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 
 <div class="card chi-siamo">
 <h3>Chi siamo</h3>
-<p>
-Un gruppo di milanisti senza lucro e senza affiliazioni. Solo passione, con l'obiettivo di contare quanti ci sono per una partecipazione collettiva.
-</p>
+<p>Un gruppo di milanisti senza lucro e senza affiliazioni. Solo passione, con l'obiettivo di contare quanti ci sono per una partecipazione collettiva.</p>
 </div>
 
 <div class="card">
@@ -537,50 +532,35 @@ Un gruppo di milanisti senza lucro e senza affiliazioni. Solo passione, con l'ob
 
 <div class="card">
 <h3>Obiettivo</h3>
-<p>
-Valutare se esiste una base sufficiente di partecipazione per un eventuale modello di proprietà condivisa. Al raggiungimento di <strong style="color:white;">100.000 milanisti verificati</strong>, valuteremo insieme i passi successivi.
-</p>
+<p>Valutare se esiste una base sufficiente di partecipazione per un eventuale modello di proprietà condivisa. Al raggiungimento di <strong style="color:white;">200.000 milanisti verificati</strong>, valuteremo insieme i passi successivi.</p>
 </div>
 
 </section>
 
 <section style="padding:20px 16px; margin-top:20px;">
-
   <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px;">
 
-    <h2 style="font-size:16px; font-weight:900; margin-bottom:8px;">
-      Milan Fan Capital Index
-    </h2>
+    <h2 style="font-size:16px; font-weight:900; margin-bottom:8px;">Milan Fan Capital Index</h2>
+    <p style="font-size:12px; color:#aaa; margin-bottom:12px;">Indice sperimentale basato su dichiarazioni volontarie non vincolanti degli utenti verificati.</p>
 
-    <p style="font-size:12px; color:#aaa; margin-bottom:12px;">
-      Indice sperimentale basato su dichiarazioni volontarie non vincolanti degli utenti verificati.
-    </p>
-
-    <!-- GLOBAL SUMMARY -->
     <div style="display:flex; justify-content:space-between; margin-bottom:14px; gap:14px; flex-wrap:wrap;">
       <div style="flex:1 1 130px; min-width:120px;">
         <div style="font-size:11px; color:#888;">Utenti verificati</div>
         <div id="totalUsers" style="font-size:18px; font-weight:900;">0</div>
       </div>
-
       <div style="flex:1 1 130px; min-width:120px;">
         <div style="font-size:11px; color:#888;">Capitale dichiarato</div>
         <div id="totalCapital" style="font-size:18px; font-weight:900;">€0</div>
       </div>
     </div>
 
-    <!-- COUNTRIES -->
     <div style="margin-top:10px;">
       <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Top Paesi</div>
-
-      <div id="countryList" style="font-size:12px; color:#ccc; line-height:1.6;">
-        <!-- JS fills -->
-      </div>
+      <div id="countryList" style="font-size:12px; color:#ccc; line-height:1.6;"></div>
       <div id="fanCapitalChart" style="margin-top:14px;"></div>
     </div>
 
   </div>
-
 </section>
 
 <footer>
@@ -590,14 +570,9 @@ Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-// Posiziona la stellina milestone a 200k/1B = 0.02% della barra
-// Ma la rendiamo visibile a minimo 18% per non sparire a sinistra
 (function() {
-  const TARGET = 1000000000;
-  const MILESTONE = 200000;
-  const pct = Math.max((MILESTONE / TARGET) * 100, 18);
   const star = document.getElementById('milestoneStar');
-  if (star) star.style.left = pct + '%';
+  if (star) star.style.left = '20%';
 })();
 </script>
 
