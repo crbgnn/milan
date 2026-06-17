@@ -822,7 +822,6 @@ async function completeLogin(userData) {
     upsertProfile(userData).catch((e) => console.error(e));
   }
 }
-  }
 
   selectors.tierButtons.forEach((button) => {
     button.addEventListener('click', (event) => {
