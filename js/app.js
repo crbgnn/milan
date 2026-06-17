@@ -329,29 +329,6 @@ function updateAuthDisplay(user) {
   }
 }
 
-async function logout() {
-  try {
-    await supabaseClient.auth.signOut();
-
-    state.loggedIn = false;
-    state.user = null;
-
-    updateCtaText();
-
-    selectors.loginContainer.innerHTML = `
-      <h3>Verifica identità</h3>
-      <a href="#" onclick="event.preventDefault(); loginWithGoogle()">Google</a>
-      <a href="#" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
-    `;
-
-    document.getElementById('verifiedBadge')?.remove();
-
-    console.log("LOGOUT OK");
-  } catch (e) {
-    console.error("logout error", e);
-  }
-}
-window.logout = logout;
 
 async function loadPledgeStats() {
   const { data: pledges, error, count } = await supabaseClient
@@ -863,6 +840,32 @@ async function completeLogin(userData) {
       if (selectors.pledgeButton) selectors.pledgeButton.disabled = false;
     });
   });
+  async function logout() {
+  try {
+    await supabaseClient.auth.signOut();
+
+    state.loggedIn = false;
+    state.user = null;
+
+    updateCtaText();
+
+    const logoutBtn = document.getElementById('logoutButton');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+
+    selectors.loginContainer.innerHTML = `
+      <h3>Verifica identità</h3>
+      <a href="#" onclick="event.preventDefault(); loginWithGoogle()">Continua con Google</a>
+      <a href="#" onclick="event.preventDefault(); openOtpForm()">Email + OTP</a>
+    `;
+
+    document.getElementById('verifiedBadge')?.remove();
+
+    console.log("logout OK");
+  } catch (err) {
+    console.error("logout error:", err);
+  }
+}
+window.logout = logout;
 
 async function init() {
   if (window.__APP_INIT__) return;
@@ -882,7 +885,16 @@ async function init() {
     upsertProfile(state.user).catch((e) => console.error(e));
   }
 
-  setupEvents();
+ setupEvents();
+
+const btn = document.getElementById('logoutButton');
+
+if (btn) {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await logout();
+  });
+}
 
   // ✅ LOAD DATI UNA SOLA VOLTA
   loadStats();
