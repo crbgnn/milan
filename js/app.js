@@ -358,14 +358,11 @@ async function loadPledgeStats() {
     .from('pledges')
     .select('amount, user_id', { count: 'exact' });
 
-  if (error) {
-    console.error('Error loading public pledge stats:', error);
-    return {
-      users: 0,
-      count: 0,
-      total: 0,
-    };
-  }
+ if (error) {
+  console.error("FULL ERROR:", error);
+  alert(error.message);
+  return;
+}
 
   const rows = pledges || [];
   const total = rows.reduce((sum, p) => sum + Number(p.amount), 0);
