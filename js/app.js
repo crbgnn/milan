@@ -204,39 +204,15 @@ let otpLock = false;
 
 async function loginWithEmail(email) {
   try {
-    if (otpLock) return;
-    otpLock = true;
-
     if (!email || !email.includes("@")) {
       alert("Inserisci una email valida");
       return;
     }
 
-    const res = await fetch(
-      "https://tgaqsjnjwqqnozscdpds.functions.supabase.co/otp-rate-limit",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-
-          // 🔥 IMPORTANTISSIMO PER SUPABASE EDGE
-          apikey: supabaseClient.supabaseKey,
-          Authorization: `Bearer ${supabaseClient.supabaseKey}`,
-        },
-        body: JSON.stringify({ email }),
-      }
-    );
-
-    const check = await res.json();
-    console.log("OTP CHECK:", check);
-
-    if (!res.ok || !check?.allowed) {
-      alert(check?.error || "Troppi tentativi. Riprova tra poco.");
-      return;
-    }
-
     const { data, error } =
-      await supabaseClient.auth.signInWithOtp({ email });
+      await supabaseClient.auth.signInWithOtp({
+        email
+      });
 
     if (error) {
       console.error("OTP error:", error);
@@ -245,13 +221,13 @@ async function loginWithEmail(email) {
     }
 
     console.log("OTP inviato:", data);
+    alert("Controlla la tua email 📩");
+
     return data;
 
   } catch (err) {
     console.error("loginWithEmail crash:", err);
     alert("Errore inatteso");
-  } finally {
-    otpLock = false;
   }
 }
 
