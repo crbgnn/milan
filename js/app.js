@@ -200,15 +200,26 @@ async function loginWithGoogle() {
   return data;
 }
 
+let otpLock = false;
+
 async function loginWithEmail(email) {
   try {
+    // 🚫 anti doppio click / doppia chiamata
+    if (otpLock) return;
+    otpLock = true;
+
+    setTimeout(() => {
+      otpLock = false;
+    }, 5000);
+
     // 1. controllo base email
     if (!email) {
       alert("Inserisci una email valida");
+      otpLock = false;
       return;
     }
 
-    // 2. CHIAMATA EDGE FUNCTION (anti spam OTP)
+    // 2. CHIAMATA EDGE FUNCTION (rate limit)
     const res = await fetch(
       "https://tgaqsjnjwqqnozscdpds.functions.supabase.co/otp-rate-limit",
       {
@@ -216,20 +227,19 @@ async function loginWithEmail(email) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email,
-        }),
+        body: JSON.stringify({ email }),
       }
     );
 
     const check = await res.json();
 
-console.log("OTP CHECK:", check);
+    console.log("OTP CHECK:", check);
 
-if (!check || check.allowed !== true) {
-  alert(check?.error || "Troppi tentativi. Riprova tra poco.");
-  return;
-}
+    // 🚫 BLOCCO SICURO
+    if (!check || check.allowed !== true) {
+      alert(check?.error || "Troppi tentativi. Riprova tra poco.");
+      return;
+    }
 
     // 3. INVIO OTP SOLO SE OK
     const { data, error } =
@@ -245,9 +255,12 @@ if (!check || check.allowed !== true) {
 
     console.log("OTP inviato:", data);
     return data;
+
   } catch (err) {
     console.error("loginWithEmail crash:", err);
     alert("Errore inatteso");
+  } finally {
+    otpLock = false;
   }
 }
 
