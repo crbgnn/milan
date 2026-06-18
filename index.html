@@ -93,7 +93,7 @@ height:8px;
 width:100%;
 background:#222;
 border-radius:999px;
-overflow:hidden;
+overflow:visible;
 position:relative;
 }
 
@@ -140,6 +140,10 @@ transition: width 1s ease;
 }
 
 .milestone-star:hover .milestone-tooltip {
+  display: block;
+}
+
+.milestone-end:hover .milestone-tooltip {
   display: block;
 }
 .milestone-end {
