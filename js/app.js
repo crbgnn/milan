@@ -204,48 +204,39 @@ let otpLock = false;
 
 async function loginWithEmail(email) {
   try {
-    // 🚫 anti doppio click / doppia chiamata
     if (otpLock) return;
     otpLock = true;
 
-    setTimeout(() => {
-      otpLock = false;
-    }, 5000);
-
-    // 1. controllo base email
-    if (!email) {
+    if (!email || !email.includes("@")) {
       alert("Inserisci una email valida");
-      otpLock = false;
       return;
     }
 
-    // 2. CHIAMATA EDGE FUNCTION (rate limit)
     const res = await fetch(
       "https://tgaqsjnjwqqnozscdpds.functions.supabase.co/otp-rate-limit",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+
+          // 🔥 IMPORTANTISSIMO PER SUPABASE EDGE
+          apikey: supabaseClient.supabaseKey,
+          Authorization: `Bearer ${supabaseClient.supabaseKey}`,
         },
         body: JSON.stringify({ email }),
       }
     );
 
     const check = await res.json();
-
     console.log("OTP CHECK:", check);
 
-    // 🚫 BLOCCO SICURO
-    if (!check || check.allowed !== true) {
+    if (!res.ok || !check?.allowed) {
       alert(check?.error || "Troppi tentativi. Riprova tra poco.");
       return;
     }
 
-    // 3. INVIO OTP SOLO SE OK
     const { data, error } =
-      await supabaseClient.auth.signInWithOtp({
-        email,
-      });
+      await supabaseClient.auth.signInWithOtp({ email });
 
     if (error) {
       console.error("OTP error:", error);
