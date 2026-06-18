@@ -204,28 +204,47 @@ let otpLock = false;
 
 async function loginWithEmail(email) {
   try {
-    if (!email) {
-      alert("Inserisci una email valida");
+    if (!email || !email.includes("@")) {
+      alert("Inserisci una email valida.");
       return;
     }
 
-    const { data, error } =
-      await supabaseClient.auth.signInWithOtp({
-        email
-      });
+    const { data, error } = await supabaseClient.auth.signInWithOtp({
+      email
+    });
 
     if (error) {
-      console.error(error);
-      alert("Errore invio OTP");
+      console.error("OTP error:", error);
+
+      if (
+        error.message?.toLowerCase().includes("rate limit") ||
+        error.message?.toLowerCase().includes("email rate limit exceeded")
+      ) {
+        alert(
+`⚠️ Abbiamo raggiunto temporaneamente il limite di invio email.
+
+✔ Puoi accedere subito con Google.
+
+Oppure riprova più tardi.`
+        );
+      } else {
+        alert("Errore durante l'invio del codice OTP. Riprova.");
+      }
+
       return;
     }
 
-    alert("Email inviata ✔");
+    alert(
+`📩 Email inviata!
+
+Controlla la tua casella di posta e inserisci il codice OTP per completare l'accesso.`
+    );
+
     return data;
 
   } catch (err) {
-    console.error(err);
-    alert("Errore inatteso");
+    console.error("loginWithEmail crash:", err);
+    alert("Errore inatteso. Riprova tra qualche istante.");
   }
 }
 
