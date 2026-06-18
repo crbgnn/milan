@@ -584,6 +584,42 @@ Minimo indicativo 500€ • Nessun pagamento in questa fase
 Progetto indipendente • Nessuna affiliazione con AC Milan S.p.A.
 </footer>
 
+<div id="kilpin-ticker" style="position:fixed; bottom:20px; left:16px; max-width:260px; background:rgba(0,0,0,.82); border:1px solid rgba(196,28,35,.35); border-radius:12px; padding:12px 14px; z-index:998; display:none;">
+  <div style="font-size:9px; color:#C41C23; font-weight:700; letter-spacing:.1em; margin-bottom:6px;">📜 STORIA ROSSONERA</div>
+  <div id="kilpin-text" style="font-size:11px; color:#ddd; line-height:1.6; font-style:italic;"></div>
+</div>
+<script>
+(function(){
+  const frasi = [
+    'Il Milan nacque in un hotel il 16 dicembre 1899. La riunione si sciolse verso mezzanotte con un\'allegra bicchierata.',
+    'Kilpin nascose bottiglie di whisky in buche a bordo del campo. Diceva che era il miglior modo per dimenticare una rete subita.',
+    'La notte del suo matrimonio, Kilpin ricevette l\'invito per una partita. Prese il treno e si presentò in campo il giorno dopo.',
+    'La prima sede del Milan era la Fiaschetteria Toscana di Via Berchet. Contratti firmati tra un bicchiere di vino e l\'altro.',
+    'Kilpin giocava sempre con un cappello in testa — il "cap" inglese. Da quella parola deriva il termine per le presenze in nazionale.',
+    'Un compagno di Kilpin era un cantante lirico. Consultava il barometro prima di ogni partita: alla prima goccia di pioggia spariva.',
+    'La tomba di Kilpin rimase abbandonata per decenni. Fu ritrovata nel 1998 da un tifoso che cercava negli archivi cimiteriali.',
+    'A 13 anni Kilpin fondò il suo primo club, intitolato a Garibaldi, con casacche rosse. Trent\'anni dopo fondò il Milan.',
+    'Il primo scudetto arrivò nel 1901, solo due anni dalla fondazione. Il Genoa battuto 3-0 in finale.'
+  ];
+  let i = 0;
+  const box = document.getElementById('kilpin-ticker');
+  const txt = document.getElementById('kilpin-text');
+  function show(){
+    txt.style.opacity = 0;
+    setTimeout(()=>{
+      txt.textContent = frasi[i % frasi.length];
+      txt.style.transition = 'opacity .8s';
+      txt.style.opacity = 1;
+      i++;
+    }, 400);
+  }
+  setTimeout(()=>{
+    box.style.display = 'block';
+    show();
+    setInterval(show, 7000);
+  }, 3000);
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
