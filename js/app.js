@@ -204,7 +204,7 @@ let otpLock = false;
 
 async function loginWithEmail(email) {
   try {
-    if (!email || !email.includes("@")) {
+    if (!email) {
       alert("Inserisci una email valida");
       return;
     }
@@ -215,18 +215,16 @@ async function loginWithEmail(email) {
       });
 
     if (error) {
-      console.error("OTP error:", error);
+      console.error(error);
       alert("Errore invio OTP");
       return;
     }
 
-    console.log("OTP inviato:", data);
-    alert("Controlla la tua email 📩");
-
+    alert("Email inviata ✔");
     return data;
 
   } catch (err) {
-    console.error("loginWithEmail crash:", err);
+    console.error(err);
     alert("Errore inatteso");
   }
 }
