@@ -224,10 +224,12 @@ async function loginWithEmail(email) {
 
     const check = await res.json();
 
-    if (!check.allowed) {
-      alert("Troppi tentativi. Riprova tra poco.");
-      return;
-    }
+console.log("OTP CHECK:", check);
+
+if (!check || check.allowed !== true) {
+  alert(check?.error || "Troppi tentativi. Riprova tra poco.");
+  return;
+}
 
     // 3. INVIO OTP SOLO SE OK
     const { data, error } =
