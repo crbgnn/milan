@@ -201,12 +201,52 @@ async function loginWithGoogle() {
 }
 
 async function loginWithEmail(email) {
-  const { data, error } = await supabaseClient.auth.signInWithOtp({
-    email,
-  });
+  try {
+    // 1. controllo base email
+    if (!email) {
+      alert("Inserisci una email valida");
+      return;
+    }
 
-  if (error) console.error(error);
-  return data;
+    // 2. CHIAMATA EDGE FUNCTION (anti spam OTP)
+    const res = await fetch(
+      "https://tgaqsjnjwqqnozscdpds.functions.supabase.co/otp-rate-limit",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+        }),
+      }
+    );
+
+    const check = await res.json();
+
+    if (!check.allowed) {
+      alert("Troppi tentativi. Riprova tra poco.");
+      return;
+    }
+
+    // 3. INVIO OTP SOLO SE OK
+    const { data, error } =
+      await supabaseClient.auth.signInWithOtp({
+        email,
+      });
+
+    if (error) {
+      console.error("OTP error:", error);
+      alert("Errore invio OTP");
+      return;
+    }
+
+    console.log("OTP inviato:", data);
+    return data;
+  } catch (err) {
+    console.error("loginWithEmail crash:", err);
+    alert("Errore inatteso");
+  }
 }
 
 async function getUser() {
