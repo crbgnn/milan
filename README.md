@@ -3,4 +3,4 @@ Il Milan ai Tifosi — esperimento globale per misurare il potenziale interesse 
 
 Pagina principale: [index.html](index.html)
 
-Questo repository contiene una semplice pagina statica di anteprima per l'esperimento.
+
