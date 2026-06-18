@@ -142,7 +142,16 @@ transition: width 1s ease;
 .milestone-star:hover .milestone-tooltip {
   display: block;
 }
-
+.milestone-end {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+}
 /* HERO */
 .hero{
 padding:90px 16px 25px;
@@ -440,7 +449,11 @@ padding:30px 16px;
   <div id="progressFill" class="fill"></div>
   <div class="milestone-star" id="milestoneStar">
     ⭐
-    <div class="milestone-tooltip">200.000 tifosi — soglia psicologica</div>
+    <div class="milestone-tooltip">soglia stellare 200k</div>
+  </div>
+  <div class="milestone-end">
+    🏆
+    <div class="milestone-tooltip" style="right:0; left:auto;">soglia controllo Milan</div>
   </div>
 </div>
 </div>
